@@ -9,17 +9,20 @@ import android.media.MediaMetadata;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 
 /**
  * 音乐扫描器
  */
-public final class MusicScanner {
+final class MusicScanner {
 
     private Context mContext;
     private static final String tag = MusicScanner.class.getSimpleName();
@@ -35,12 +38,13 @@ public final class MusicScanner {
         }
     }
 
+    //region 检索音乐媒体（不包含插图信息）
+
     /**
      * 检索音乐媒体（不包含插图信息）
      *
      * @return false, 当游标为 null 时
      */
-    @AnyThread
     public boolean retrieveMedia(@NonNull ArrayList<MediaMetadata> outMedias) {
         Cursor cursor = mContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 null, MediaStore.Audio.Media.IS_MUSIC + "!=0", null, null);
@@ -70,6 +74,9 @@ public final class MusicScanner {
         cursor.close();
         return true;
     }
+    //endregion
+
+    //region 获取专辑封面
 
     /**
      * 获取专辑封面
@@ -91,5 +98,40 @@ public final class MusicScanner {
         if (albumArtData != null) bitmap = BitmapFactory.decodeByteArray(albumArtData, 0, albumArtData.length);
         return bitmap;
     }
+    //endregion
 
+    //region 检索播放列表
+    public boolean retrieveAllPlayList(@Nullable ConcurrentMap<String, List<MediaMetadata>> outResult, Map<String, MediaMetadata> metadataMap) {
+        Cursor cursor = mContext.getContentResolver().query(MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
+                null, null, null, null);
+        if (cursor == null) return false;
+        if (!cursor.moveToFirst()) {
+            cursor.close();
+            return true;
+        }
+        do {
+            String playlistId = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Playlists._ID));
+            String playlistName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Playlists.NAME));
+            String playlistData = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Playlists.DATA));
+            Cursor query = mContext.getContentResolver().query(Uri.parse(playlistData), null,
+                    MediaStore.Audio.Playlists.Members.PLAYLIST_ID + "==" + playlistId, null, null);
+            if (query == null) continue;
+            if (!query.moveToNext()) {
+                query.close();
+                continue;
+            }
+            List<MediaMetadata> list = new ArrayList<>(query.getCount());
+
+            do {
+                list.add(metadataMap.get(query.getString(query.getColumnIndex(MediaStore.Audio.Playlists.Members.AUDIO_ID))));
+            } while (query.moveToNext());
+
+            if (!outResult.containsKey(playlistName)){
+                outResult.put(playlistName, list);
+            }
+
+        } while (cursor.moveToNext());
+        return true;
+    }
+    //endregion
 }
