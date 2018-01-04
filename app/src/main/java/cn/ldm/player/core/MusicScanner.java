@@ -101,6 +101,7 @@ final class MusicScanner {
     //endregion
 
     //region 检索播放列表
+    // TODO: 2018.01.04.0004  检索播放列表
     public boolean retrieveAllPlayList(@Nullable ConcurrentMap<String, List<MediaMetadata>> outResult, Map<String, MediaMetadata> metadataMap) {
         Cursor cursor = mContext.getContentResolver().query(MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
                 null, null, null, null);

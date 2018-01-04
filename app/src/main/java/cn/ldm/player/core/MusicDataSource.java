@@ -17,25 +17,21 @@ public final class MusicDataSource {
 
     private Context mContext;
     public final static String UNKNOWN = "unknown";
-    public final static String MEDIA_ID_NOW_PLAYING = "__NOW_PLAYING__";
     private static MusicDataSource instance;
     private ConcurrentMap<String, MediaMetadata> mMusicListByTitle;
     private ConcurrentMap<String, Map<String, MediaMetadata>> mMusicListByArtist;   // ConcurrentMap<歌手,Map<专辑,元数据>>
     private ConcurrentMap<String, List<MediaMetadata>> mMusicListByAlbum;           // ConcurrentMap<专辑,List<元数据>>
     private ConcurrentMap<String, List<MediaMetadata>> mMusicListByPlaylist;        // ConcurrentMap<播放列表名,List<元数据>>
-    private MediaMetadata.Builder mMediaMetadataBuilder;
 
     public static MusicDataSource getInstance(Context context) {
         synchronized (MusicDataSource.class) {
             if (instance == null) {
                 instance = new MusicDataSource();
                 instance.mContext = context;
-                instance.mMediaMetadataBuilder = new MediaMetadata.Builder();
                 instance.mMusicListByTitle = new ConcurrentHashMap<>();
                 instance.mMusicListByArtist = new ConcurrentHashMap<>();
                 instance.mMusicListByAlbum = new ConcurrentHashMap<>();
                 instance.mMusicListByPlaylist = new ConcurrentHashMap<>();
-//                instance.mMusicListByPlaylist.put(MEDIA_ID_NOW_PLAYING, new ArrayList<MediaMetadata>());
 
                 ArrayList<MediaMetadata> result = new ArrayList<>();
                 MusicScanner.getInstance(context).retrieveMedia(result);
