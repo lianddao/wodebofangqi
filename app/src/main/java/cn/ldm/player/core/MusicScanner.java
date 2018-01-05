@@ -127,7 +127,7 @@ final class MusicScanner {
                 list.add(metadataMap.get(query.getString(query.getColumnIndex(MediaStore.Audio.Playlists.Members.AUDIO_ID))));
             } while (query.moveToNext());
 
-            if (!outResult.containsKey(playlistName)){
+            if (!outResult.containsKey(playlistName)) {
                 outResult.put(playlistName, list);
             }
 

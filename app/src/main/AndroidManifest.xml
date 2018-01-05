@@ -16,16 +16,17 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".MainActivity">
-
-        </activity>
-        <activity android:name=".activities.PermissionActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
-
-                <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <service android:name=".services.MyMediaBrowserService">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserservice"/>
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

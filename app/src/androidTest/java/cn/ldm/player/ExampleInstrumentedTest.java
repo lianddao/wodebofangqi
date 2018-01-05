@@ -7,7 +7,7 @@ import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import cn.ldm.player.core.MusicDataSource;
+import cn.ldm.player.core.MusicMetadataDataSource;
 
 import static org.junit.Assert.assertEquals;
 
@@ -23,7 +23,7 @@ public class ExampleInstrumentedTest {
     }
 
     Context mContext = InstrumentationRegistry.getTargetContext();// 被测试应用程序的上下文
-    MusicDataSource dataSource = MusicDataSource.getInstance(mContext);
+    MusicMetadataDataSource dataSource = MusicMetadataDataSource.getInstance(mContext);
 
     @Test
     public void retrieveMusic() throws Exception {

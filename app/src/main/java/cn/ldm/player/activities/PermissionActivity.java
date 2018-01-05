@@ -9,40 +9,36 @@ import android.util.Log;
 
 import java.util.ArrayList;
 
+public abstract class PermissionActivity extends Activity {
 
-public  class PermissionActivity extends Activity {
-
+    private static final String tag = PermissionActivity.class.getSimpleName();
     private static final int REQUEST_PERMISSION_CODE = 0;
     private static final String[] REQUEST_PERMISSION_NAME = new String[]{
             Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.CAMERA
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.CAMERA,
+            Manifest.permission.READ_CONTACTS
     };
-    private ArrayList<String> REQUEST_PERMISSION_NAME_ARRAY;
-
-    {
-        REQUEST_PERMISSION_NAME_ARRAY = new ArrayList<>();
-        for (int i = 0; i < REQUEST_PERMISSION_NAME.length; i++)
-            REQUEST_PERMISSION_NAME_ARRAY.add(REQUEST_PERMISSION_NAME[i]);
-    }
+    private ArrayList<String> mRequestPermissionNameArray;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //判断当前已获得的权限
-        for (int i = 0; i < REQUEST_PERMISSION_NAME_ARRAY.size(); i++) {
-            if (checkSelfPermission(REQUEST_PERMISSION_NAME[i]) == PackageManager.PERMISSION_GRANTED) {
-                REQUEST_PERMISSION_NAME_ARRAY.remove(i);
+        //组织需要申请的权限
+        mRequestPermissionNameArray = new ArrayList<>();
+        for (int i = 0; i < REQUEST_PERMISSION_NAME.length; i++) {
+            if (checkSelfPermission(REQUEST_PERMISSION_NAME[i]) == PackageManager.PERMISSION_DENIED) {
+                Log.i(tag, "组织需要申请的权限" + REQUEST_PERMISSION_NAME[i]);
+                mRequestPermissionNameArray.add(REQUEST_PERMISSION_NAME[i]);
+            } else {
+                Log.i(tag, "已获得的权限:" + REQUEST_PERMISSION_NAME[i]);
             }
         }
 
-        if (REQUEST_PERMISSION_NAME_ARRAY.size() > 0) {
-            Log.i("abc", "需要申请 " + REQUEST_PERMISSION_NAME_ARRAY.size() + " 个权限");
-            String[] requests = new String[REQUEST_PERMISSION_NAME_ARRAY.size()];
-            try {
-                requestPermissions(REQUEST_PERMISSION_NAME_ARRAY.toArray(requests), REQUEST_PERMISSION_CODE);
-            } catch (Exception ex) {
-                Log.i("abc", ex.toString());
-            }
+        if (mRequestPermissionNameArray.size() > 0) {
+            Log.i(tag, "需要申请 " + mRequestPermissionNameArray.size() + " 个权限");
+            String[] requests = new String[mRequestPermissionNameArray.size()];
+            requestPermissions(mRequestPermissionNameArray.toArray(requests), REQUEST_PERMISSION_CODE);
             return;
         }
 
@@ -53,28 +49,26 @@ public  class PermissionActivity extends Activity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_PERMISSION_CODE) {
             boolean b = true;
-            for (int i = 0; i < REQUEST_PERMISSION_NAME_ARRAY.size(); i++) {
+            for (int i = 0; i < mRequestPermissionNameArray.size(); i++) {
                 if (grantResults.length == 0 || grantResults[i] != PackageManager.PERMISSION_GRANTED) {
-                    Log.i("abc", REQUEST_PERMISSION_NAME_ARRAY.get(i) + " 失败");
+                    Log.i(tag, mRequestPermissionNameArray.get(i) + " 失败");
                     b = b && false;
                 } else {
-                    Log.i("abc", REQUEST_PERMISSION_NAME_ARRAY.get(i) + " 成功");
+                    Log.i(tag, mRequestPermissionNameArray.get(i) + " 成功");
                     b = b && true;
                 }
             }
 
             if (b == false) {
                 finish();
-                Log.i("abc", "权限不足,退出应用");
+                Log.i(tag, "权限不足,退出应用");
                 return;
             } else {
-                Log.i("abc", "成功授予所有权限");
+                Log.i(tag, "成功授予所有权限");
                 initApp();
             }
         }
     }
 
-    public  void initApp(){
-        Log.i("abc","initApp()");
-    }
+    public abstract void initApp();
 }

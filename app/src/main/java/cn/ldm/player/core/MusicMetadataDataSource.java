@@ -11,22 +11,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * 音乐数据源
+ * '音乐元数据'数据源
  */
-public final class MusicDataSource {
+public final class MusicMetadataDataSource {
 
     private Context mContext;
     public final static String UNKNOWN = "unknown";
-    private static MusicDataSource instance;
+    private static MusicMetadataDataSource instance;
     private ConcurrentMap<String, MediaMetadata> mMusicListByTitle;
     private ConcurrentMap<String, Map<String, MediaMetadata>> mMusicListByArtist;   // ConcurrentMap<歌手,Map<专辑,元数据>>
     private ConcurrentMap<String, List<MediaMetadata>> mMusicListByAlbum;           // ConcurrentMap<专辑,List<元数据>>
     private ConcurrentMap<String, List<MediaMetadata>> mMusicListByPlaylist;        // ConcurrentMap<播放列表名,List<元数据>>
 
-    public static MusicDataSource getInstance(Context context) {
-        synchronized (MusicDataSource.class) {
+    public static MusicMetadataDataSource getInstance(Context context) {
+        synchronized (MusicMetadataDataSource.class) {
             if (instance == null) {
-                instance = new MusicDataSource();
+                instance = new MusicMetadataDataSource();
                 instance.mContext = context;
                 instance.mMusicListByTitle = new ConcurrentHashMap<>();
                 instance.mMusicListByArtist = new ConcurrentHashMap<>();
@@ -65,6 +65,17 @@ public final class MusicDataSource {
     //endregion
 
     //region 按音乐人归类。 ConcurrentMap<歌手,Map<专辑,元数据>>
+    private void addMusicToArtistList(MediaMetadata metadata) {
+        String thisArtist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST);
+        if (thisArtist == null) thisArtist = UNKNOWN;
+        String thisAlbum = metadata.getString(MediaMetadata.METADATA_KEY_ALBUM);
+        if (thisAlbum == null) thisAlbum = UNKNOWN;
+        if (!mMusicListByArtist.containsKey(thisArtist))
+            mMusicListByArtist.put(thisArtist, new ConcurrentHashMap<String, MediaMetadata>());
+        Map<String, MediaMetadata> albumsMap = mMusicListByArtist.get(thisArtist);
+        albumsMap.put(thisAlbum, metadata);
+    }
+
     public ConcurrentMap<String, Map<String, MediaMetadata>> getMusicListByArtist() {
         if (mMusicListByArtist.size() == 0) return null;
         return mMusicListByArtist;
@@ -79,17 +90,6 @@ public final class MusicDataSource {
             Log.i("abc", "---");
         }
     }
-
-    private void addMusicToArtistList(MediaMetadata metadata) {
-        String thisArtist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST);
-        if (thisArtist == null) thisArtist = UNKNOWN;
-        String thisAlbum = metadata.getString(MediaMetadata.METADATA_KEY_ALBUM);
-        if (thisAlbum == null) thisAlbum = UNKNOWN;
-        if (!mMusicListByArtist.containsKey(thisArtist))
-            mMusicListByArtist.put(thisArtist, new ConcurrentHashMap<String, MediaMetadata>());
-        Map<String, MediaMetadata> albumsMap = mMusicListByArtist.get(thisArtist);
-        albumsMap.put(thisAlbum, metadata);
-    }
     //endregion
 
     //region 按专辑归类。
@@ -100,6 +100,16 @@ public final class MusicDataSource {
             mMusicListByAlbum.put(thisAlbum, new ArrayList<MediaMetadata>());
         }
         mMusicListByAlbum.get(thisAlbum).add(metadata);
+    }
+
+    public Iterable<MediaMetadata> getMusicListByAlbum(String album) {
+        List<MediaMetadata> items = null;
+        for (Map.Entry<String, List<MediaMetadata>> entry : mMusicListByAlbum.entrySet()) {
+            if (entry.getKey().equals(album)) {
+                items = entry.getValue();
+            }
+        }
+        return items;
     }
 
     public void toStringAlbumList() {
