@@ -1,15 +1,35 @@
 package cn.ldm.player;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.media.MediaDescription;
+import android.media.browse.MediaBrowser;
+import android.os.IBinder;
+import android.service.media.MediaBrowserService;
+import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.rule.ServiceTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import cn.ldm.player.core.MusicMetadataDataSource;
+import java.util.ArrayList;
+import java.util.List;
 
+import cn.ldm.player.core.MusicMetadataDataSource;
+import cn.ldm.player.services.MyMediaBrowserService;
+
+import static cn.ldm.player.services.MyMediaBrowserService.MEDIA_ID_MUSIC_BY_ALBUM;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * 仪器化测试，将在Android设备上执行。
@@ -17,17 +37,44 @@ import static org.junit.Assert.assertEquals;
  */
 @RunWith(AndroidJUnit4.class)
 public class ExampleInstrumentedTest {
+
+    Context mContext = InstrumentationRegistry.getTargetContext();// 被测试应用程序的上下文
+    MusicMetadataDataSource dataSource = MusicMetadataDataSource.getInstance(mContext);
+    MediaBrowser.MediaItem mParentItem = new MediaBrowser.MediaItem(new MediaDescription.Builder()
+            .setMediaId(MEDIA_ID_MUSIC_BY_ALBUM)
+            .build(),
+            MediaBrowser.MediaItem.FLAG_BROWSABLE
+    );
+
+    public ServiceTestRule serviceTestRule = new ServiceTestRule();
+    ActivityTestRule<MainActivity> activityRule = new ActivityTestRule<MainActivity>(MainActivity.class);
+    MainActivity mainActivity;
+
+
+    @Before
+    public void setup() throws Exception {
+        activityRule.launchActivity(null);
+        mainActivity = activityRule.getActivity();
+    }
+
+    @After
+    public void uninstall() throws Exception {
+
+    }
+
     @Test
     public void useAppContext() throws Exception {
         assertEquals("cn.ldm.player", mContext.getPackageName());
     }
 
-    Context mContext = InstrumentationRegistry.getTargetContext();// 被测试应用程序的上下文
-    MusicMetadataDataSource dataSource = MusicMetadataDataSource.getInstance(mContext);
-
     @Test
-    public void retrieveMusic() throws Exception {
-        dataSource.toStringPlaylist();
+    public void bindService() throws Exception {
+        IBinder iBinder = serviceTestRule.bindService(new Intent(mContext, MyMediaBrowserService.class));
+        MyMediaBrowserService service = ((MyMediaBrowserService.LocalBinder) iBinder).getService();
     }
 
+    @Test
+    public void startService() throws Exception {
+        serviceTestRule.startService(new Intent(mContext, MyMediaBrowserService.class));
+    }
 }

@@ -4,7 +4,10 @@ import android.media.MediaDescription;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.media.session.MediaSession;
+import android.os.Binder;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.os.SystemClock;
 import android.service.media.MediaBrowserService;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -108,35 +111,49 @@ public class MyMediaBrowserService extends MediaBrowserService {
                 //endregion
                 break;
             default:
-                Log.i("abc", "根据'__BY_ALBUM_专辑名称'组织数据");
+                Log.i("abc", parentId);
                 if (parentId.startsWith(MEDIA_ID_MUSIC_BY_ALBUM)) {
+                    Log.i("abc", "根据'__BY_ALBUM_专辑名称'组织数据");
                     String album = parentId.split(String.valueOf(CATEGORY_SEPARATOR))[1];
                     for (MediaMetadata metadata : dataSource.getMusicListByAlbum(album)) {
                         MediaItem item = new MediaItem(
                                 new MediaDescription.Builder()
-                                        .setMediaId(MEDIA_ID_MUSIC_BY_ALBUM + (char) 31 + album + LEAF_SEPARATOR + metadata.getDescription().getMediaId())
-                                        .setTitle(album)
+                                        .setMediaId(MEDIA_ID_MUSIC_BY_ALBUM + CATEGORY_SEPARATOR + album + LEAF_SEPARATOR + metadata.getDescription().getMediaId())
+                                        .setTitle(metadata.getDescription().getTitle())
                                         .build(),
-                                MediaItem.FLAG_BROWSABLE
+                                MediaItem.FLAG_PLAYABLE
                         );
                         mediaItems.add(item);
                     }
+                } else if (parentId.startsWith(MEDIA_ID_MUSIC_BY_TITLE)) {
+
+                } else if (parentId.startsWith(MEDIA_ID_MUSIC_BY_ARTIST)) {
+
                 }
+
                 break;
         }
         result.sendResult(mediaItems);
     }
     //endregion
 
+
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.i("abc", MyMediaBrowserService.class.getName());
         mSession = new MediaSession(this, MyMediaBrowserService.class.getName());
         setSessionToken(mSession.getSessionToken());
     }
 
-    private static final char CATEGORY_SEPARATOR = 31;  //单元分隔符 US ␟
-    private static final char LEAF_SEPARATOR = 30;      //记录分隔符 RS ␞
+
+    public static final char CATEGORY_SEPARATOR = 31;  //单元分隔符 US ␟
+    public static final char LEAF_SEPARATOR = 30;      //记录分隔符 RS ␞
+    private final IBinder mBinder = new LocalBinder();
+
+    public class LocalBinder extends Binder {
+        public MyMediaBrowserService getService() {
+            return MyMediaBrowserService.this;
+        }
+    }
 
 }
