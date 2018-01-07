@@ -3,6 +3,7 @@ package cn.ldm.player.core;
 import android.content.Context;
 import android.media.MediaMetadata;
 import android.util.Log;
+import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,7 @@ public final class MusicMetadataDataSource {
     private Context mContext;
     public final static String UNKNOWN = "unknown";
     private static MusicMetadataDataSource instance;
+    private ArrayList<MediaMetadata> mMusicList;
     private ConcurrentMap<String, MediaMetadata> mMusicListByTitle;
     private ConcurrentMap<String, Map<String, MediaMetadata>> mMusicListByArtist;   // ConcurrentMap<歌手,Map<专辑,元数据>>
     private ConcurrentMap<String, List<MediaMetadata>> mMusicListByAlbum;           // ConcurrentMap<专辑,List<元数据>>
@@ -28,6 +30,7 @@ public final class MusicMetadataDataSource {
             if (instance == null) {
                 instance = new MusicMetadataDataSource();
                 instance.mContext = context;
+                instance.mMusicList = new ArrayList<>();
                 instance.mMusicListByTitle = new ConcurrentHashMap<>();
                 instance.mMusicListByArtist = new ConcurrentHashMap<>();
                 instance.mMusicListByAlbum = new ConcurrentHashMap<>();
@@ -51,6 +54,7 @@ public final class MusicMetadataDataSource {
         String thisMusic = metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE);
         if (thisMusic == null) thisMusic = UNKNOWN;
         mMusicListByTitle.put(metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID), metadata);
+        mMusicList.add(metadata);
     }
 
     public void toStringTitleList() {
@@ -61,6 +65,10 @@ public final class MusicMetadataDataSource {
 
     public ConcurrentMap<String, MediaMetadata> getMusicListByTitle() {
         return mMusicListByTitle;
+    }
+
+    public Iterable<MediaMetadata> getMusicList() {
+        return mMusicList;
     }
     //endregion
 
@@ -79,6 +87,10 @@ public final class MusicMetadataDataSource {
     public ConcurrentMap<String, Map<String, MediaMetadata>> getMusicListByArtist() {
         if (mMusicListByArtist.size() == 0) return null;
         return mMusicListByArtist;
+    }
+
+    public Map<String, MediaMetadata> getMusicListByArtist(String artist) {
+        return mMusicListByArtist.get(artist);
     }
 
     public void toStringArtistList() {
@@ -102,14 +114,12 @@ public final class MusicMetadataDataSource {
         mMusicListByAlbum.get(thisAlbum).add(metadata);
     }
 
-    public Iterable<MediaMetadata> getMusicListByAlbum(String album) {
-        List<MediaMetadata> items = null;
-        for (Map.Entry<String, List<MediaMetadata>> entry : mMusicListByAlbum.entrySet()) {
-            if (entry.getKey().equals(album)) {
-                items = entry.getValue();
-            }
+
+    public Iterable<MediaMetadata> getMusicListByAlbumForArtist(String artist, String album) {
+        if (mMusicListByArtist.get(artist).containsKey(album)) {
+            return mMusicListByAlbum.get(album);
         }
-        return items;
+        return null;
     }
 
     public void toStringAlbumList() {
@@ -122,6 +132,10 @@ public final class MusicMetadataDataSource {
 
     public Map<String, List<MediaMetadata>> getMusicListByAlbum() {
         return mMusicListByAlbum;
+    }
+
+    public Iterable<MediaMetadata> getMusicListByAlbum(String album) {
+        return mMusicListByAlbum.get(album);
     }
     //endregion
 

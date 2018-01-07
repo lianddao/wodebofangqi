@@ -7,7 +7,6 @@ import android.media.session.MediaSession;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.SystemClock;
 import android.service.media.MediaBrowserService;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -36,7 +35,6 @@ public class MyMediaBrowserService extends MediaBrowserService {
     @Nullable
     @Override
     public BrowserRoot onGetRoot(@NonNull String clientPackageName, int clientUid, @Nullable Bundle rootHints) {
-        Log.i("abc", "onGetRoot");
         return new BrowserRoot(MEDIA_ID_ROOT, null);// 知道 __ROOT__ 的人可以浏览
     }
 
@@ -89,7 +87,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
                                     .setMediaId(MEDIA_ID_MUSIC_BY_TITLE + CATEGORY_SEPARATOR + entry.getValue().getDescription().getTitle())
                                     .setTitle(entry.getKey())
                                     .build(),
-                            MediaItem.FLAG_BROWSABLE
+                            MediaItem.FLAG_PLAYABLE
                     );
                     mediaItems.add(item);
                 }
@@ -110,10 +108,19 @@ public class MyMediaBrowserService extends MediaBrowserService {
                 }
                 //endregion
                 break;
+            case MEDIA_ID_MUSIC_BY_ARTIST:
+                Log.i("abc", "根据'__BY_ARTIST__'组织数据");
+                for (Map.Entry<String, Map<String, MediaMetadata>> entry : dataSource.getMusicListByArtist().entrySet()) {
+                    MediaItem item = new MediaItem(
+                            new MediaDescription.Builder().setMediaId(MEDIA_ID_MUSIC_BY_ARTIST + CATEGORY_SEPARATOR + entry.getKey()).build(),
+                            MediaItem.FLAG_BROWSABLE);
+                    mediaItems.add(item);
+                }
+                break;
             default:
                 Log.i("abc", parentId);
                 if (parentId.startsWith(MEDIA_ID_MUSIC_BY_ALBUM)) {
-                    Log.i("abc", "根据'__BY_ALBUM_专辑名称'组织数据");
+                    Log.i("abc", "根据'__BY_ALBUM__专辑名称'组织数据");
                     String album = parentId.split(String.valueOf(CATEGORY_SEPARATOR))[1];
                     for (MediaMetadata metadata : dataSource.getMusicListByAlbum(album)) {
                         MediaItem item = new MediaItem(
@@ -125,10 +132,26 @@ public class MyMediaBrowserService extends MediaBrowserService {
                         );
                         mediaItems.add(item);
                     }
-                } else if (parentId.startsWith(MEDIA_ID_MUSIC_BY_TITLE)) {
-
                 } else if (parentId.startsWith(MEDIA_ID_MUSIC_BY_ARTIST)) {
-
+                    Log.i("abc", "根据'__BY_ARTIST__歌手名称'组织数据");
+                    if (!parentId.endsWith(String.valueOf(LEAF_SEPARATOR))) {
+                        String artist = parentId.split(String.valueOf(CATEGORY_SEPARATOR))[1];
+                        for (Map.Entry<String, MediaMetadata> entry : dataSource.getMusicListByArtist(artist).entrySet()) {
+                            MediaItem item = new MediaItem(
+                                    new MediaDescription.Builder().setMediaId(MEDIA_ID_MUSIC_BY_ARTIST + CATEGORY_SEPARATOR + artist + CATEGORY_SEPARATOR + entry.getKey() + LEAF_SEPARATOR).build(),
+                                    MediaItem.FLAG_BROWSABLE);
+                            mediaItems.add(item);
+                        }
+                    } else {
+                        Log.i("abc", parentId);
+                        String[] split = parentId.split(String.valueOf(LEAF_SEPARATOR))[0].split(String.valueOf(CATEGORY_SEPARATOR));
+                        for (MediaMetadata metadata :  dataSource.getMusicListByAlbumForArtist(split[1], split[2])) {
+                            MediaItem item = new MediaItem(
+                                    new MediaDescription.Builder().setMediaId(parentId + metadata.getDescription().getTitle()).build(),
+                                    MediaItem.FLAG_PLAYABLE);
+                            mediaItems.add(item);
+                        }
+                    }
                 }
 
                 break;

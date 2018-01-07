@@ -42,7 +42,7 @@ public abstract class PermissionActivity extends Activity {
             return;
         }
 
-        initApp();
+        initAppAfterRequestPermission();
     }
 
     @Override
@@ -65,10 +65,10 @@ public abstract class PermissionActivity extends Activity {
                 return;
             } else {
                 Log.i(tag, "成功授予所有权限");
-                initApp();
+                initAppAfterRequestPermission();
             }
         }
     }
 
-    public abstract void initApp();
+    public abstract void initAppAfterRequestPermission();
 }
