@@ -57,7 +57,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
                         new MediaItem(
                                 new MediaDescription.Builder()
                                         .setMediaId(MEDIA_ID_MUSIC_BY_TITLE)
-                                        .setTitle("Titles")
+                                        .setTitle("全部歌曲")
                                         .build(),
                                 MediaItem.FLAG_BROWSABLE)
                 );
@@ -65,7 +65,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
                         new MediaItem(
                                 new MediaDescription.Builder()
                                         .setMediaId(MEDIA_ID_MUSIC_BY_ARTIST)
-                                        .setTitle("Artists")
+                                        .setTitle("歌手")
                                         .build(),
                                 MediaItem.FLAG_BROWSABLE)
                 );
@@ -73,7 +73,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
                         new MediaItem(
                                 new MediaDescription.Builder()
                                         .setMediaId(MEDIA_ID_MUSIC_BY_ALBUM)
-                                        .setTitle("Albums")
+                                        .setTitle("专辑")
                                         .build(),
                                 MediaItem.FLAG_BROWSABLE)
                 );
@@ -85,7 +85,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
                     MediaItem item = new MediaItem(
                             new MediaDescription.Builder()
                                     .setMediaId(MEDIA_ID_MUSIC_BY_TITLE + CATEGORY_SEPARATOR + entry.getValue().getDescription().getTitle())
-                                    .setTitle(entry.getKey())
+                                    .setTitle(entry.getValue().getDescription().getTitle())
                                     .build(),
                             MediaItem.FLAG_PLAYABLE
                     );
@@ -100,10 +100,10 @@ public class MyMediaBrowserService extends MediaBrowserService {
                             new MediaDescription.Builder()
                                     .setMediaId(MEDIA_ID_MUSIC_BY_ALBUM + CATEGORY_SEPARATOR + entry.getKey())
                                     .setTitle(entry.getKey())
+                                    .setDescription("专辑名称")
                                     .build(),
                             MediaItem.FLAG_BROWSABLE
                     );
-
                     mediaItems.add(item);
                 }
                 //endregion
@@ -112,7 +112,11 @@ public class MyMediaBrowserService extends MediaBrowserService {
                 Log.i("abc", "根据'__BY_ARTIST__'组织数据");
                 for (Map.Entry<String, Map<String, MediaMetadata>> entry : dataSource.getMusicListByArtist().entrySet()) {
                     MediaItem item = new MediaItem(
-                            new MediaDescription.Builder().setMediaId(MEDIA_ID_MUSIC_BY_ARTIST + CATEGORY_SEPARATOR + entry.getKey()).build(),
+                            new MediaDescription.Builder()
+                                    .setMediaId(MEDIA_ID_MUSIC_BY_ARTIST + CATEGORY_SEPARATOR + entry.getKey())
+                                    .setTitle(entry.getKey())
+                                    .setDescription("音乐人名称")
+                                    .build(),
                             MediaItem.FLAG_BROWSABLE);
                     mediaItems.add(item);
                 }
@@ -138,16 +142,22 @@ public class MyMediaBrowserService extends MediaBrowserService {
                         String artist = parentId.split(String.valueOf(CATEGORY_SEPARATOR))[1];
                         for (Map.Entry<String, MediaMetadata> entry : dataSource.getMusicListByArtist(artist).entrySet()) {
                             MediaItem item = new MediaItem(
-                                    new MediaDescription.Builder().setMediaId(MEDIA_ID_MUSIC_BY_ARTIST + CATEGORY_SEPARATOR + artist + CATEGORY_SEPARATOR + entry.getKey() + LEAF_SEPARATOR).build(),
+                                    new MediaDescription.Builder()
+                                            .setMediaId(MEDIA_ID_MUSIC_BY_ARTIST + CATEGORY_SEPARATOR + artist + CATEGORY_SEPARATOR + entry.getKey() + LEAF_SEPARATOR)
+                                            .setTitle(entry.getKey())
+                                            .build(),
                                     MediaItem.FLAG_BROWSABLE);
                             mediaItems.add(item);
                         }
                     } else {
                         Log.i("abc", parentId);
                         String[] split = parentId.split(String.valueOf(LEAF_SEPARATOR))[0].split(String.valueOf(CATEGORY_SEPARATOR));
-                        for (MediaMetadata metadata :  dataSource.getMusicListByAlbumForArtist(split[1], split[2])) {
+                        for (MediaMetadata metadata : dataSource.getMusicListByAlbumForArtist(split[1], split[2])) {
                             MediaItem item = new MediaItem(
-                                    new MediaDescription.Builder().setMediaId(parentId + metadata.getDescription().getTitle()).build(),
+                                    new MediaDescription.Builder()
+                                            .setMediaId(parentId + metadata.getDescription().getTitle())
+                                            .setTitle(metadata.getDescription().getTitle())
+                                            .build(),
                                     MediaItem.FLAG_PLAYABLE);
                             mediaItems.add(item);
                         }

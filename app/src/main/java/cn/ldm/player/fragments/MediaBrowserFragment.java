@@ -8,6 +8,7 @@ import android.media.browse.MediaBrowser.MediaItem;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -64,7 +65,7 @@ public class MediaBrowserFragment extends Fragment {
         if (view instanceof RecyclerView) {
             Context context = view.getContext();
             RecyclerView recyclerView = (RecyclerView) view;
-            recyclerView.setLayoutManager(new GridLayoutManager(context, 1));
+            recyclerView.setLayoutManager(new LinearLayoutManager(context));
             recyclerView.setAdapter(mMediaItemAdapter);
 
             MediaBrowser mediaBrowser = mListener.getMediaBrowser();
