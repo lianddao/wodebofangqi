@@ -1,10 +1,12 @@
 package cn.ldm.player.services;
 
+import android.media.AudioManager;
 import android.media.MediaDescription;
 import android.media.MediaMetadata;
 import android.media.MediaPlayer;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.media.session.MediaSession;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -92,6 +94,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
                             new MediaDescription.Builder()
                                     .setMediaId(MEDIA_ID_MUSIC_BY_TITLE + CATEGORY_SEPARATOR + entry.getValue().getDescription().getTitle())
                                     .setTitle(entry.getValue().getDescription().getTitle())
+                                    .setMediaUri(Uri.parse(entry.getValue().getString(MediaMetadata.METADATA_KEY_ART_URI)))
                                     .build(),
                             MediaItem.FLAG_PLAYABLE
                     );
@@ -137,6 +140,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
                                 new MediaDescription.Builder()
                                         .setMediaId(MEDIA_ID_MUSIC_BY_ALBUM + CATEGORY_SEPARATOR + album + LEAF_SEPARATOR + metadata.getDescription().getMediaId())
                                         .setTitle(metadata.getDescription().getTitle())
+                                        .setMediaUri(Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_ART_URI)))
                                         .build(),
                                 MediaItem.FLAG_PLAYABLE
                         );
@@ -151,6 +155,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
                                     new MediaDescription.Builder()
                                             .setMediaId(MEDIA_ID_MUSIC_BY_ARTIST + CATEGORY_SEPARATOR + artist + CATEGORY_SEPARATOR + entry.getKey() + LEAF_SEPARATOR)
                                             .setTitle(entry.getKey())
+                                            .setMediaUri(Uri.parse(entry.getValue().getString(MediaMetadata.METADATA_KEY_ART_URI)))
                                             .build(),
                                     MediaItem.FLAG_BROWSABLE);
                             mediaItems.add(item);
@@ -163,6 +168,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
                                     new MediaDescription.Builder()
                                             .setMediaId(parentId + metadata.getDescription().getTitle())
                                             .setTitle(metadata.getDescription().getTitle())
+                                            .setMediaUri(Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_ART_URI)))
                                             .build(),
                                     MediaItem.FLAG_PLAYABLE);
                             mediaItems.add(item);
@@ -194,8 +200,12 @@ public class MyMediaBrowserService extends MediaBrowserService {
                     }
                 }
                 try {
+                    createMediaPlayerIfNeeded();
                     mMediaPlayer.setDataSource(getApplicationContext(), mediaItem.getDescription().getMediaUri());
+                    mMediaPlayer.prepare();
+                    mMediaPlayer.start();
                 } catch (Exception ex) {
+                    Log.i(TAG, "onPlayFromMediaId: " + ex.toString());
                 }
             }
         });
@@ -205,7 +215,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
         Log.d(TAG, "createMediaPlayerIfNeeded. needed? " + (mMediaPlayer == null));
         if (mMediaPlayer == null) {
             mMediaPlayer = new MediaPlayer();
-
+            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         } else {
             mMediaPlayer.reset();
         }
