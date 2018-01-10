@@ -55,7 +55,6 @@ public class MyMediaBrowserService extends MediaBrowserService {
         result.detach();
         // 获取本地或网络文件
         MusicMetadataDataSource dataSource = MusicMetadataDataSource.getInstance(this);
-        //        List<MediaItem> mediaItems = new ArrayList<>();
         mediaItems.clear();
         switch (parentId) {
             case MEDIA_ID_ROOT:
@@ -92,7 +91,8 @@ public class MyMediaBrowserService extends MediaBrowserService {
                 for (Map.Entry<String, MediaMetadata> entry : dataSource.getMusicListByTitle().entrySet()) {
                     MediaItem item = new MediaItem(
                             new MediaDescription.Builder()
-                                    .setMediaId(MEDIA_ID_MUSIC_BY_TITLE + CATEGORY_SEPARATOR + entry.getValue().getDescription().getTitle())
+                                    .setMediaId(MEDIA_ID_MUSIC_BY_TITLE + CATEGORY_SEPARATOR + entry.getValue().getDescription()
+                                            .getTitle())
                                     .setTitle(entry.getValue().getDescription().getTitle())
                                     .setMediaUri(Uri.parse(entry.getValue().getString(MediaMetadata.METADATA_KEY_ART_URI)))
                                     .build(),
@@ -138,7 +138,8 @@ public class MyMediaBrowserService extends MediaBrowserService {
                     for (MediaMetadata metadata : dataSource.getMusicListByAlbum(album)) {
                         MediaItem item = new MediaItem(
                                 new MediaDescription.Builder()
-                                        .setMediaId(MEDIA_ID_MUSIC_BY_ALBUM + CATEGORY_SEPARATOR + album + LEAF_SEPARATOR + metadata.getDescription().getMediaId())
+                                        .setMediaId(MEDIA_ID_MUSIC_BY_ALBUM + CATEGORY_SEPARATOR + album + LEAF_SEPARATOR
+                                                + metadata.getDescription().getMediaId())
                                         .setTitle(metadata.getDescription().getTitle())
                                         .setMediaUri(Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_ART_URI)))
                                         .build(),
@@ -153,7 +154,8 @@ public class MyMediaBrowserService extends MediaBrowserService {
                         for (Map.Entry<String, MediaMetadata> entry : dataSource.getMusicListByArtist(artist).entrySet()) {
                             MediaItem item = new MediaItem(
                                     new MediaDescription.Builder()
-                                            .setMediaId(MEDIA_ID_MUSIC_BY_ARTIST + CATEGORY_SEPARATOR + artist + CATEGORY_SEPARATOR + entry.getKey() + LEAF_SEPARATOR)
+                                            .setMediaId(MEDIA_ID_MUSIC_BY_ARTIST + CATEGORY_SEPARATOR + artist + CATEGORY_SEPARATOR
+                                                    + entry.getKey() + LEAF_SEPARATOR)
                                             .setTitle(entry.getKey())
                                             .setMediaUri(Uri.parse(entry.getValue().getString(MediaMetadata.METADATA_KEY_ART_URI)))
                                             .build(),

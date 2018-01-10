@@ -27,13 +27,17 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
             transaction.replace(R.id.container, MediaBrowserFragment.newInstance(MediaItemFactory.ROOT), FRAGMENT_TAG);
             transaction.commit();
         }
-        mMediaBrowser = new MediaBrowser(this, new ComponentName(this, MyMediaBrowserService.class), new MediaBrowser.ConnectionCallback() {
-            @Override
-            public void onConnected() {
-                mMediaController = new MediaController(MainActivity.this, mMediaBrowser.getSessionToken());
-                setMediaController(mMediaController);
-            }
-        }, null);
+        mMediaBrowser = new MediaBrowser(
+                this,
+                new ComponentName(this, MyMediaBrowserService.class),
+                new MediaBrowser.ConnectionCallback() {
+                    @Override
+                    public void onConnected() {
+                        mMediaController = new MediaController(MainActivity.this, mMediaBrowser.getSessionToken());
+                        setMediaController(mMediaController);
+                    }
+                },
+                null);
     }
 
 
