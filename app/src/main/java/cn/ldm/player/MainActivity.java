@@ -3,6 +3,7 @@ package cn.ldm.player;
 import android.app.FragmentTransaction;
 import android.content.ComponentName;
 import android.media.browse.MediaBrowser;
+import android.media.session.MediaController;
 import android.os.Bundle;
 
 import cn.ldm.player.activities.PermissionActivity;
@@ -13,7 +14,8 @@ import cn.ldm.player.services.MyMediaBrowserService;
 public class MainActivity extends PermissionActivity implements MediaBrowserFragment.InteractionListener {
 
     private String FRAGMENT_TAG = "fragment-tag";
-    private MediaBrowser mediaBrowser;
+    private MediaBrowser mMediaBrowser;
+    private MediaController mMediaController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,8 +27,15 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
             transaction.replace(R.id.container, MediaBrowserFragment.newInstance(MediaItemFactory.ROOT), FRAGMENT_TAG);
             transaction.commit();
         }
-        mediaBrowser = new MediaBrowser(this, new ComponentName(this, MyMediaBrowserService.class), new MediaBrowser.ConnectionCallback(), null);
+        mMediaBrowser = new MediaBrowser(this, new ComponentName(this, MyMediaBrowserService.class), new MediaBrowser.ConnectionCallback() {
+            @Override
+            public void onConnected() {
+                mMediaController = new MediaController(MainActivity.this, mMediaBrowser.getSessionToken());
+                setMediaController(mMediaController);
+            }
+        }, null);
     }
+
 
     @Override
     public void initAppAfterRequestPermission() {
@@ -36,18 +45,18 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
     @Override
     protected void onStart() {
         super.onStart();
-        mediaBrowser.connect();
+        mMediaBrowser.connect();
     }
 
     @Override
     protected void onStop() {
-        mediaBrowser.disconnect();
+        mMediaBrowser.disconnect();
         super.onStop();
     }
 
     @Override
-    public MediaBrowser getMediaBrowser() {
-        return mediaBrowser;
+    public MediaBrowser getmMediaBrowser() {
+        return mMediaBrowser;
     }
 
 }

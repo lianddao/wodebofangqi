@@ -3,17 +3,20 @@ package cn.ldm.player.fragments;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
+import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
 import android.media.browse.MediaBrowser.MediaItem;
+import android.media.session.MediaController;
+import android.media.session.MediaSession;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v7.widget.GridLayoutManager;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +25,8 @@ import cn.ldm.player.R;
 
 
 public class MediaBrowserFragment extends Fragment {
+
+    private static final String TAG = MediaBrowserFragment.class.getSimpleName();
 
     private MediaItem mParentMediaItem;
     private InteractionListener mListener;
@@ -36,7 +41,7 @@ public class MediaBrowserFragment extends Fragment {
                 transaction.addToBackStack(null);
                 transaction.commit();
             } else {
-                Toast.makeText(getContext(), "播放歌曲", Toast.LENGTH_SHORT).show();
+                getActivity().getMediaController().getTransportControls().playFromMediaId(mediaItem.getMediaId(), null);
             }
         }
     };
@@ -68,7 +73,7 @@ public class MediaBrowserFragment extends Fragment {
             recyclerView.setLayoutManager(new LinearLayoutManager(context));
             recyclerView.setAdapter(mMediaItemAdapter);
 
-            MediaBrowser mediaBrowser = mListener.getMediaBrowser();
+            MediaBrowser mediaBrowser = mListener.getmMediaBrowser();
             mediaBrowser.unsubscribe(mParentMediaItem.getMediaId());
             mediaBrowser.subscribe(mParentMediaItem.getMediaId(), new MediaBrowser.SubscriptionCallback() {
                 @Override
@@ -102,6 +107,6 @@ public class MediaBrowserFragment extends Fragment {
     }
 
     public interface InteractionListener {
-        MediaBrowser getMediaBrowser();
+        MediaBrowser getmMediaBrowser();
     }
 }
