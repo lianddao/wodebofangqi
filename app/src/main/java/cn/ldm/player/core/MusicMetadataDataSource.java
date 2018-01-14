@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import cn.ldm.player.services.MyMediaBrowserService;
+
 /**
  * '音乐元数据'数据源
  */
@@ -35,6 +37,7 @@ public final class MusicMetadataDataSource {
                 instance.mMusicListByArtist = new ConcurrentHashMap<>();
                 instance.mMusicListByAlbum = new ConcurrentHashMap<>();
                 instance.mMusicListByPlaylist = new ConcurrentHashMap<>();
+                instance.mMusicListByPlaylist.put("最近添加的音乐", new ArrayList<MediaMetadata>());
 
                 ArrayList<MediaMetadata> result = new ArrayList<>();
                 MusicScanner.getInstance(context).retrieveMedia(result);
@@ -140,6 +143,14 @@ public final class MusicMetadataDataSource {
     //endregion
 
     //region 按播放列表归类
+    public Map<String, List<MediaMetadata>> getMusicListByPlaylist() {
+        return mMusicListByPlaylist;
+    }
+
+    public List<MediaMetadata> getMusicListByPlaylist(String playlistName) {
+        return mMusicListByPlaylist.get(playlistName);
+    }
+
     public void toStringPlaylist() {
         for (Map.Entry<String, List<MediaMetadata>> i : mMusicListByPlaylist.entrySet()) {
             Log.i("abc", "播放列表名：" + i.getKey());

@@ -11,9 +11,12 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -114,23 +117,20 @@ final class MusicScanner {
             String playlistId = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Playlists._ID));
             String playlistName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Playlists.NAME));
             String playlistData = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Playlists.DATA));
+            Log.i("abc", "retrieveAllPlayList: " + playlistData);
             Cursor query = mContext.getContentResolver().query(Uri.parse(playlistData), null,
                     MediaStore.Audio.Playlists.Members.PLAYLIST_ID + "==" + playlistId, null, null);
+            outResult.put(playlistName, Collections.<MediaMetadata>emptyList());
             if (query == null) continue;
             if (!query.moveToNext()) {
                 query.close();
                 continue;
             }
             List<MediaMetadata> list = new ArrayList<>(query.getCount());
-
             do {
                 list.add(metadataMap.get(query.getString(query.getColumnIndex(MediaStore.Audio.Playlists.Members.AUDIO_ID))));
             } while (query.moveToNext());
-
-            if (!outResult.containsKey(playlistName)) {
-                outResult.put(playlistName, list);
-            }
-
+            outResult.get(playlistName).addAll(list);
         } while (cursor.moveToNext());
         return true;
     }

@@ -36,7 +36,6 @@ public class MediaItemAdapter extends RecyclerView.Adapter<MediaItemAdapter.View
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mMediaItem = mValues.get(position);
-//        holder.mIdView.setText(mValues.get(position).getMediaId());
         holder.mContentView.setText(mValues.get(position).getDescription().getTitle());
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
@@ -56,14 +55,12 @@ public class MediaItemAdapter extends RecyclerView.Adapter<MediaItemAdapter.View
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
-        public final TextView mIdView;
         public final TextView mContentView;
         public MediaItem mMediaItem;
 
         public ViewHolder(View view) {
             super(view);
             mView = view;
-            mIdView = (TextView) view.findViewById(R.id.id);
             mContentView = (TextView) view.findViewById(R.id.content);
         }
 

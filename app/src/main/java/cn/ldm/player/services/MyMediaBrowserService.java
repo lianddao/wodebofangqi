@@ -32,6 +32,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
     public final static String MEDIA_ID_MUSIC_BY_TITLE = "__BY_TITLE__";
     public final static String MEDIA_ID_MUSIC_BY_ARTIST = "__BY_ARTIST__";
     public final static String MEDIA_ID_MUSIC_BY_ALBUM = "__BY_ALBUM__";
+    public final static String MEDIA_ID_MUSIC_BY_PLAYLIST = "__BY_PLAYLIST__";
 
     private MediaSession mSession;
     private MediaPlayer mMediaPlayer;
@@ -47,7 +48,6 @@ public class MyMediaBrowserService extends MediaBrowserService {
 
     @Override
     public void onLoadChildren(@NonNull String parentId, @NonNull Result<List<MediaItem>> result) {
-        Log.i(TAG, "onLoadChildren");
         if (parentId == null) {
             result.sendResult(null);
             return;
@@ -84,9 +84,19 @@ public class MyMediaBrowserService extends MediaBrowserService {
                                         .build(),
                                 MediaItem.FLAG_BROWSABLE)
                 );
+                mediaItems.add(
+                        new MediaItem(
+                                new MediaDescription.Builder()
+                                        .setMediaId(MEDIA_ID_MUSIC_BY_PLAYLIST)
+                                        .setTitle("播放列表")
+                                        .build(),
+                                MediaItem.FLAG_BROWSABLE
+                        )
+                );
                 //endregion
                 break;
             case MEDIA_ID_MUSIC_BY_TITLE:
+                //region ..
                 Log.i(TAG, "根据'__BY_TITLE__'组织数据");
                 for (Map.Entry<String, MediaMetadata> entry : dataSource.getMusicListByTitle().entrySet()) {
                     MediaItem item = new MediaItem(
@@ -100,6 +110,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
                     );
                     mediaItems.add(item);
                 }
+                //endregion
                 break;
             case MEDIA_ID_MUSIC_BY_ALBUM:
                 //region ..
@@ -118,6 +129,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
                 //endregion
                 break;
             case MEDIA_ID_MUSIC_BY_ARTIST:
+                //region ..
                 Log.i(TAG, "根据'__BY_ARTIST__'组织数据");
                 for (Map.Entry<String, Map<String, MediaMetadata>> entry : dataSource.getMusicListByArtist().entrySet()) {
                     MediaItem item = new MediaItem(
@@ -129,27 +141,45 @@ public class MyMediaBrowserService extends MediaBrowserService {
                             MediaItem.FLAG_BROWSABLE);
                     mediaItems.add(item);
                 }
+                //endregion
+                break;
+            case MEDIA_ID_MUSIC_BY_PLAYLIST:
+                //region ..
+                Log.i(TAG, "根据'__BY_PLAYLIST__'组织数据");
+                for (Map.Entry<String, List<MediaMetadata>> entry : dataSource.getMusicListByPlaylist().entrySet()) {
+                    MediaItem item = new MediaItem(
+                            new MediaDescription.Builder()
+                                    .setMediaId(MEDIA_ID_MUSIC_BY_PLAYLIST + CATEGORY_SEPARATOR + entry.getKey())
+                                    .setTitle(entry.getKey())
+                                    .setDescription("播放列表名称")
+                                    .build(),
+                            MediaItem.FLAG_BROWSABLE);
+                    mediaItems.add(item);
+                }
+                //endregion
                 break;
             default:
-                Log.i(TAG, parentId);
-                if (parentId.startsWith(MEDIA_ID_MUSIC_BY_ALBUM)) {
-                    Log.i(TAG, "根据'__BY_ALBUM__专辑名称'组织数据");
-                    String album = parentId.split(String.valueOf(CATEGORY_SEPARATOR))[1];
-                    for (MediaMetadata metadata : dataSource.getMusicListByAlbum(album)) {
-                        MediaItem item = new MediaItem(
-                                new MediaDescription.Builder()
-                                        .setMediaId(MEDIA_ID_MUSIC_BY_ALBUM + CATEGORY_SEPARATOR + album + LEAF_SEPARATOR
-                                                + metadata.getDescription().getMediaId())
-                                        .setTitle(metadata.getDescription().getTitle())
-                                        .setMediaUri(Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_ART_URI)))
-                                        .build(),
-                                MediaItem.FLAG_PLAYABLE
-                        );
-                        mediaItems.add(item);
-                    }
-                } else if (parentId.startsWith(MEDIA_ID_MUSIC_BY_ARTIST)) {
-                    Log.i(TAG, "根据'__BY_ARTIST__歌手名称'组织数据");
-                    if (!parentId.endsWith(String.valueOf(LEAF_SEPARATOR))) {
+                if (!parentId.endsWith(String.valueOf(LEAF_SEPARATOR))) {
+                    if (parentId.startsWith(MEDIA_ID_MUSIC_BY_ALBUM)) {
+                        Log.i(TAG, "根据'__BY_ALBUM__专辑名称'组织数据");
+                        //region ..
+                        String album = parentId.split(String.valueOf(CATEGORY_SEPARATOR))[1];
+                        for (MediaMetadata metadata : dataSource.getMusicListByAlbum(album)) {
+                            MediaItem item = new MediaItem(
+                                    new MediaDescription.Builder()
+                                            .setMediaId(MEDIA_ID_MUSIC_BY_ALBUM + CATEGORY_SEPARATOR + album + LEAF_SEPARATOR
+                                                    + metadata.getDescription().getMediaId())
+                                            .setTitle(metadata.getDescription().getTitle())
+                                            .setMediaUri(Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_ART_URI)))
+                                            .build(),
+                                    MediaItem.FLAG_PLAYABLE
+                            );
+                            mediaItems.add(item);
+                        }
+                        //endregion
+                    } else if (parentId.startsWith(MEDIA_ID_MUSIC_BY_ARTIST)) {
+                        Log.i(TAG, "根据'__BY_ARTIST__歌手名称'组织数据");
+                        //region ..
                         String artist = parentId.split(String.valueOf(CATEGORY_SEPARATOR))[1];
                         for (Map.Entry<String, MediaMetadata> entry : dataSource.getMusicListByArtist(artist).entrySet()) {
                             MediaItem item = new MediaItem(
@@ -162,24 +192,43 @@ public class MyMediaBrowserService extends MediaBrowserService {
                                     MediaItem.FLAG_BROWSABLE);
                             mediaItems.add(item);
                         }
-                    } else {
-                        Log.i(TAG, parentId);
-                        String[] split = parentId.split(String.valueOf(LEAF_SEPARATOR))[0].split(String.valueOf(CATEGORY_SEPARATOR));
-                        for (MediaMetadata metadata : dataSource.getMusicListByAlbumForArtist(split[1], split[2])) {
+                        //endregion
+                    } else if (parentId.startsWith(MEDIA_ID_MUSIC_BY_PLAYLIST)) {
+                        Log.i(TAG, "根据'__BY_PLAYLIST__播放列表名称'组织数据 " + parentId);
+                        //region ..
+                        String playlistName = parentId.split(String.valueOf(CATEGORY_SEPARATOR))[1];
+                        for (MediaMetadata metadata : dataSource.getMusicListByPlaylist(playlistName)) {
                             MediaItem item = new MediaItem(
                                     new MediaDescription.Builder()
-                                            .setMediaId(parentId + metadata.getDescription().getTitle())
+                                            .setMediaId(parentId + LEAF_SEPARATOR + metadata.getDescription().getMediaId())
                                             .setTitle(metadata.getDescription().getTitle())
                                             .setMediaUri(Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_ART_URI)))
                                             .build(),
-                                    MediaItem.FLAG_PLAYABLE);
+                                    MediaItem.FLAG_PLAYABLE
+                            );
                             mediaItems.add(item);
                         }
+                        //endregion
                     }
+                } else {
+                    Log.i(TAG, parentId);
+                    //region ..
+                    String[] split = parentId.split(String.valueOf(LEAF_SEPARATOR))[0].split(String.valueOf(CATEGORY_SEPARATOR));
+                    for (MediaMetadata metadata : dataSource.getMusicListByAlbumForArtist(split[1], split[2])) {
+                        MediaItem item = new MediaItem(
+                                new MediaDescription.Builder()
+                                        .setMediaId(parentId + metadata.getDescription().getTitle())
+                                        .setTitle(metadata.getDescription().getTitle())
+                                        .setMediaUri(Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_ART_URI)))
+                                        .build(),
+                                MediaItem.FLAG_PLAYABLE);
+                        mediaItems.add(item);
+                    }
+                    //endregion
                 }
-
                 break;
         }
+
         result.sendResult(mediaItems);
     }
     //endregion
