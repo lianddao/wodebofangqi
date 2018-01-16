@@ -3,18 +3,13 @@ package cn.ldm.player.fragments;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
-import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
 import android.media.browse.MediaBrowser.MediaItem;
-import android.media.session.MediaController;
-import android.media.session.MediaSession;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -75,7 +70,7 @@ public class MediaBrowserFragment extends Fragment {
             recyclerView.setAdapter(mMediaItemAdapter);
             recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL));
 
-            MediaBrowser mediaBrowser = mListener.getmMediaBrowser();
+            MediaBrowser mediaBrowser = mListener.getMediaBrowser();
             mediaBrowser.unsubscribe(mParentMediaItem.getMediaId());
             mediaBrowser.subscribe(mParentMediaItem.getMediaId(), new MediaBrowser.SubscriptionCallback() {
                 @Override
@@ -109,6 +104,6 @@ public class MediaBrowserFragment extends Fragment {
     }
 
     public interface InteractionListener {
-        MediaBrowser getmMediaBrowser();
+        MediaBrowser getMediaBrowser();
     }
 }

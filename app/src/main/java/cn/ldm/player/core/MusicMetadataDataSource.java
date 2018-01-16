@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import cn.ldm.player.loader.PlaylistLoader;
+import cn.ldm.player.model.Playlist;
 import cn.ldm.player.services.MyMediaBrowserService;
 
 /**
@@ -25,7 +27,6 @@ public final class MusicMetadataDataSource {
     private ConcurrentMap<String, MediaMetadata> mMusicListByTitle;
     private ConcurrentMap<String, Map<String, MediaMetadata>> mMusicListByArtist;   // ConcurrentMap<歌手,Map<专辑,元数据>>
     private ConcurrentMap<String, List<MediaMetadata>> mMusicListByAlbum;           // ConcurrentMap<专辑,List<元数据>>
-    private ConcurrentMap<String, List<MediaMetadata>> mMusicListByPlaylist;        // ConcurrentMap<播放列表名,List<元数据>>
 
     public static MusicMetadataDataSource getInstance(Context context) {
         synchronized (MusicMetadataDataSource.class) {
@@ -36,8 +37,6 @@ public final class MusicMetadataDataSource {
                 instance.mMusicListByTitle = new ConcurrentHashMap<>();
                 instance.mMusicListByArtist = new ConcurrentHashMap<>();
                 instance.mMusicListByAlbum = new ConcurrentHashMap<>();
-                instance.mMusicListByPlaylist = new ConcurrentHashMap<>();
-                instance.mMusicListByPlaylist.put("最近添加的音乐", new ArrayList<MediaMetadata>());
 
                 ArrayList<MediaMetadata> result = new ArrayList<>();
                 MusicScanner.getInstance(context).retrieveMedia(result);
@@ -46,7 +45,6 @@ public final class MusicMetadataDataSource {
                     instance.addMusicToAlbumList(metadata);
                     instance.addMusicToArtistList(metadata);
                 }
-                MusicScanner.getInstance(context).retrieveAllPlayList(instance.mMusicListByPlaylist, instance.mMusicListByTitle);
             }
             return instance;
         }
@@ -142,23 +140,4 @@ public final class MusicMetadataDataSource {
     }
     //endregion
 
-    //region 按播放列表归类
-    public Map<String, List<MediaMetadata>> getMusicListByPlaylist() {
-        return mMusicListByPlaylist;
-    }
-
-    public List<MediaMetadata> getMusicListByPlaylist(String playlistName) {
-        return mMusicListByPlaylist.get(playlistName);
-    }
-
-    public void toStringPlaylist() {
-        for (Map.Entry<String, List<MediaMetadata>> i : mMusicListByPlaylist.entrySet()) {
-            Log.i("abc", "播放列表名：" + i.getKey());
-            for (MediaMetadata j : i.getValue()) {
-                Log.i("abc", j.getDescription().getTitle().toString());
-            }
-            Log.i("abc", "---");
-        }
-    }
-    //endregion
 }

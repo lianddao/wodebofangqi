@@ -21,6 +21,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
+import cn.ldm.player.loader.PlaylistLoader;
+import cn.ldm.player.model.Playlist;
+import cn.ldm.player.tool.PlaylistTool;
+
 
 /**
  * 音乐扫描器
@@ -103,36 +107,4 @@ final class MusicScanner {
     }
     //endregion
 
-    //region 检索播放列表
-    // TODO: 2018.01.04.0004  检索播放列表
-    public boolean retrieveAllPlayList(@Nullable ConcurrentMap<String, List<MediaMetadata>> outResult, Map<String, MediaMetadata> metadataMap) {
-        Cursor cursor = mContext.getContentResolver().query(MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
-                null, null, null, null);
-        if (cursor == null) return false;
-        if (!cursor.moveToFirst()) {
-            cursor.close();
-            return true;
-        }
-        do {
-            String playlistId = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Playlists._ID));
-            String playlistName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Playlists.NAME));
-            String playlistData = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Playlists.DATA));
-            Log.i("abc", "retrieveAllPlayList: " + playlistData);
-            Cursor query = mContext.getContentResolver().query(Uri.parse(playlistData), null,
-                    MediaStore.Audio.Playlists.Members.PLAYLIST_ID + "==" + playlistId, null, null);
-            outResult.put(playlistName, Collections.<MediaMetadata>emptyList());
-            if (query == null) continue;
-            if (!query.moveToNext()) {
-                query.close();
-                continue;
-            }
-            List<MediaMetadata> list = new ArrayList<>(query.getCount());
-            do {
-                list.add(metadataMap.get(query.getString(query.getColumnIndex(MediaStore.Audio.Playlists.Members.AUDIO_ID))));
-            } while (query.moveToNext());
-            outResult.get(playlistName).addAll(list);
-        } while (cursor.moveToNext());
-        return true;
-    }
-    //endregion
 }

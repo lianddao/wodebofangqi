@@ -59,7 +59,7 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
     }
 
     @Override
-    public MediaBrowser getmMediaBrowser() {
+    public MediaBrowser getMediaBrowser() {
         return mMediaBrowser;
     }
 

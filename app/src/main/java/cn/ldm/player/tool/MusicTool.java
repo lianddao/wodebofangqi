@@ -1,6 +1,17 @@
 package cn.ldm.player.tool;
 
+import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
 import android.media.MediaMetadata;
+import android.net.Uri;
+import android.provider.BaseColumns;
+import android.provider.MediaStore;
+import android.widget.Toast;
+
+import cn.ldm.player.R;
 
 /**
  * Created by LDM on 2017.12.17.0017.
@@ -20,4 +31,9 @@ public class MusicTool {
         int minutes = (int) duration / 60000;
         return String.format("%02d:%02d", minutes, seconds);
     }
+
+    public static int getSecond(long duration) {
+        return (int) (duration % 60000) / 1000;
+    }
+
 }

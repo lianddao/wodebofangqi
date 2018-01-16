@@ -21,6 +21,10 @@ import java.util.List;
 import java.util.Map;
 
 import cn.ldm.player.core.MusicMetadataDataSource;
+import cn.ldm.player.loader.PlaylistLoader;
+import cn.ldm.player.model.Playlist;
+import cn.ldm.player.model.Song;
+import cn.ldm.player.tool.PlaylistTool;
 
 
 /**
@@ -141,19 +145,20 @@ public class MyMediaBrowserService extends MediaBrowserService {
                             MediaItem.FLAG_BROWSABLE);
                     mediaItems.add(item);
                 }
+                // TODO: 2018.01.16.0016 简化 将数据转换为MediaItem集合
                 //endregion
                 break;
             case MEDIA_ID_MUSIC_BY_PLAYLIST:
                 //region ..
                 Log.i(TAG, "根据'__BY_PLAYLIST__'组织数据");
-                for (Map.Entry<String, List<MediaMetadata>> entry : dataSource.getMusicListByPlaylist().entrySet()) {
+                for (Playlist playlist : new PlaylistLoader(this).loadInBackground()) {
                     MediaItem item = new MediaItem(
                             new MediaDescription.Builder()
-                                    .setMediaId(MEDIA_ID_MUSIC_BY_PLAYLIST + CATEGORY_SEPARATOR + entry.getKey())
-                                    .setTitle(entry.getKey())
-                                    .setDescription("播放列表名称")
+                                    .setMediaId(parentId + LEAF_SEPARATOR + playlist.mPlaylistId)
+                                    .setTitle(playlist.mPlaylistName)
                                     .build(),
-                            MediaItem.FLAG_BROWSABLE);
+                            MediaItem.FLAG_BROWSABLE
+                    );
                     mediaItems.add(item);
                 }
                 //endregion
@@ -196,13 +201,14 @@ public class MyMediaBrowserService extends MediaBrowserService {
                     } else if (parentId.startsWith(MEDIA_ID_MUSIC_BY_PLAYLIST)) {
                         Log.i(TAG, "根据'__BY_PLAYLIST__播放列表名称'组织数据 " + parentId);
                         //region ..
-                        String playlistName = parentId.split(String.valueOf(CATEGORY_SEPARATOR))[1];
-                        for (MediaMetadata metadata : dataSource.getMusicListByPlaylist(playlistName)) {
+                        long playlistId = Long.valueOf(parentId.split(String.valueOf(LEAF_SEPARATOR))[1]);
+                        if (playlistId < 0) break;
+                        PlaylistLoader playlistLoader = new PlaylistLoader(this);
+                        for (Song song : playlistLoader.getSongForPlaylist(playlistId)) {
                             MediaItem item = new MediaItem(
                                     new MediaDescription.Builder()
-                                            .setMediaId(parentId + LEAF_SEPARATOR + metadata.getDescription().getMediaId())
-                                            .setTitle(metadata.getDescription().getTitle())
-                                            .setMediaUri(Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_ART_URI)))
+                                            .setMediaId(parentId + LEAF_SEPARATOR + song.mSongId)
+                                            .setTitle(song.mSongName)
                                             .build(),
                                     MediaItem.FLAG_PLAYABLE
                             );

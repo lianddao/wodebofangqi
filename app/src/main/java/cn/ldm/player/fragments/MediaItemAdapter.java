@@ -1,7 +1,10 @@
 package cn.ldm.player.fragments;
 
+import android.app.Activity;
+import android.app.DialogFragment;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,10 +13,13 @@ import android.widget.TextView;
 import java.util.List;
 
 import cn.ldm.player.R;
+import cn.ldm.player.demo.FragmentDialog;
+import cn.ldm.player.loader.PlaylistLoader;
+import cn.ldm.player.model.Playlist;
 
 
 public class MediaItemAdapter extends RecyclerView.Adapter<MediaItemAdapter.ViewHolder> {
-
+    private static final String TAG = MediaItemAdapter.class.getSimpleName();
     private final List<MediaItem> mValues;
     private final OnMediaItemClickListener mListener;
 
@@ -35,8 +41,9 @@ public class MediaItemAdapter extends RecyclerView.Adapter<MediaItemAdapter.View
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        holder.mMediaItem = mValues.get(position);
-        holder.mContentView.setText(mValues.get(position).getDescription().getTitle());
+        final MediaItem item = mValues.get(position);
+        holder.mMediaItem = item;
+        holder.mContentView.setText(item.getDescription().getTitle().toString());
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -46,6 +53,20 @@ public class MediaItemAdapter extends RecyclerView.Adapter<MediaItemAdapter.View
                 }
             }
         });
+
+        if (item.isPlayable()) {
+            holder.mView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    Log.i(TAG, "onLongClick: ");
+                    Activity activity = (Activity) holder.mView.getContext();
+                    DialogFragment dialogFragment = FragmentDialog.MyDialogFragment.newInstance(10);
+                    dialogFragment.show(activity.getFragmentManager(), "dialog");
+                    return true;
+                }
+            });
+        }
+
     }
 
     @Override
