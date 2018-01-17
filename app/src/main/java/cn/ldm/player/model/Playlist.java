@@ -13,11 +13,7 @@
 
 package cn.ldm.player.model;
 
-import android.media.MediaDescription;
-import android.media.browse.MediaBrowser;
 import android.text.TextUtils;
-
-import java.util.List;
 
 /**
  * 表示播放列表的类。

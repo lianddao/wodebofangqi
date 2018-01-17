@@ -10,20 +10,9 @@ import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
-
-import cn.ldm.player.loader.PlaylistLoader;
-import cn.ldm.player.model.Playlist;
-import cn.ldm.player.tool.PlaylistTool;
 
 
 /**

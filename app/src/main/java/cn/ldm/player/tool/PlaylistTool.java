@@ -22,7 +22,6 @@ import cn.ldm.player.loader.PlaylistLoader;
 /**
  * 播放列表工具类
  */
-
 public class PlaylistTool {
 
     private static ContentValues[] mContentValuesCache = null;
@@ -101,12 +100,12 @@ public class PlaylistTool {
      *
      * @param context
      * @param ids        歌曲的id集合
-     * @param playlistid 要添加到的播放列表的id
+     * @param playlistId 要添加到的播放列表的id
      */
-    public static void addToPlaylist(final Context context, final long[] ids, final long playlistid) {
+    public static void addToPlaylist(final Context context, final long[] ids, final long playlistId) {
         final ContentResolver resolver = context.getContentResolver();
         final String[] projection = new String[]{"max(" + MediaStore.Audio.Playlists.Members.PLAY_ORDER + ")",};
-        final Uri uri = MediaStore.Audio.Playlists.Members.getContentUri(VOLUME_EXTERNAL, playlistid);
+        final Uri uri = MediaStore.Audio.Playlists.Members.getContentUri(VOLUME_EXTERNAL, playlistId);
         Cursor cursor = null;
         int base = 0;
 

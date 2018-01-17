@@ -13,9 +13,7 @@ import android.widget.TextView;
 import java.util.List;
 
 import cn.ldm.player.R;
-import cn.ldm.player.demo.FragmentDialog;
-import cn.ldm.player.loader.PlaylistLoader;
-import cn.ldm.player.model.Playlist;
+import cn.ldm.player.menu.CreateNewPlaylist;
 
 
 public class MediaItemAdapter extends RecyclerView.Adapter<MediaItemAdapter.ViewHolder> {
@@ -60,14 +58,15 @@ public class MediaItemAdapter extends RecyclerView.Adapter<MediaItemAdapter.View
                 public boolean onLongClick(View v) {
                     Log.i(TAG, "onLongClick: ");
                     Activity activity = (Activity) holder.mView.getContext();
-                    DialogFragment dialogFragment = FragmentDialog.MyDialogFragment.newInstance(10);
-                    dialogFragment.show(activity.getFragmentManager(), "dialog");
+                    CreateNewPlaylist.getInstance(null).show(activity.getFragmentManager(), "CreatePlaylist");
                     return true;
                 }
             });
         }
 
     }
+
+
 
     @Override
     public int getItemCount() {

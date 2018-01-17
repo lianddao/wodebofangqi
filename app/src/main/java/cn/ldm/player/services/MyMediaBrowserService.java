@@ -10,7 +10,6 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.PowerManager;
 import android.service.media.MediaBrowserService;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -24,7 +23,6 @@ import cn.ldm.player.core.MusicMetadataDataSource;
 import cn.ldm.player.loader.PlaylistLoader;
 import cn.ldm.player.model.Playlist;
 import cn.ldm.player.model.Song;
-import cn.ldm.player.tool.PlaylistTool;
 
 
 /**

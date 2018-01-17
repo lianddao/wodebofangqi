@@ -3,7 +3,6 @@ package cn.ldm.player.loader;
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
-import android.media.browse.MediaBrowser;
 import android.provider.BaseColumns;
 import android.provider.MediaStore;
 

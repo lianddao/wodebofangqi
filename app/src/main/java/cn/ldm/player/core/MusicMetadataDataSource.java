@@ -3,17 +3,12 @@ package cn.ldm.player.core;
 import android.content.Context;
 import android.media.MediaMetadata;
 import android.util.Log;
-import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import cn.ldm.player.loader.PlaylistLoader;
-import cn.ldm.player.model.Playlist;
-import cn.ldm.player.services.MyMediaBrowserService;
 
 /**
  * '音乐元数据'数据源

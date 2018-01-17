@@ -1,5 +1,6 @@
 package cn.ldm.player;
 
+import android.app.Dialog;
 import android.app.FragmentTransaction;
 import android.content.ComponentName;
 import android.media.browse.MediaBrowser;
@@ -40,6 +41,10 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
                 null);
     }
 
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        return super.onCreateDialog(id);
+    }
 
     @Override
     public void initAppAfterRequestPermission() {
