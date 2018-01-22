@@ -67,7 +67,7 @@ public class PlaylistLoader extends WrappedAsyncTaskLoader<List<Playlist>> {
      * @param playlistId 播放列表的id
      * @return 播放列表中的歌曲数量
      */
-    public int getSongCountForPlaylist( long playlistId) {
+    public int getSongCountForPlaylist(long playlistId) {
         Cursor c = getContext().getContentResolver().query(
                 MediaStore.Audio.Playlists.Members.getContentUri(VOLUME_EXTERNAL, playlistId),
                 new String[]{BaseColumns._ID},
@@ -89,7 +89,7 @@ public class PlaylistLoader extends WrappedAsyncTaskLoader<List<Playlist>> {
         return 0;
     }
 
-    public List<Song> getSongForPlaylist( long playlistId) {
+    public List<Song> getSongForPlaylist(long playlistId) {
         Cursor cursor = getContext().getContentResolver().query(
                 MediaStore.Audio.Playlists.Members.getContentUri(VOLUME_EXTERNAL, playlistId),
                 null,
@@ -107,14 +107,14 @@ public class PlaylistLoader extends WrappedAsyncTaskLoader<List<Playlist>> {
                 String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
                 long duration = MusicTool.getSecond(cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)));
                 int year = cursor.getInt(cursor.getColumnIndex(MediaStore.Audio.Media.YEAR));
-                Song song = new Song(id, title, artist, album, -1, duration, year);
+                String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+                Song song = new Song(id, title, artist, album, -1, duration, year, data);
                 result.add(song);
             }
         }
         cursor.close();
         return result;
     }
-
 
 
     /**

@@ -14,6 +14,7 @@
 package cn.ldm.player.model;
 
 import android.media.MediaMetadata;
+import android.net.Uri;
 import android.text.TextUtils;
 
 import cn.ldm.player.tool.MusicTool;
@@ -63,6 +64,8 @@ public class Song {
      */
     public String mBucketLabel;
 
+    public Uri mData;
+
     /**
      * Constructor of <code>Song</code>
      *
@@ -74,7 +77,7 @@ public class Song {
      * @param year       The year the song was recorded
      */
     public Song(final long songId, final String songName, final String artistName,
-                final String albumName, final long albumId, final long duration, final int year) {
+                final String albumName, final long albumId, final long duration, final int year, final String data) {
         mSongId = songId;
         mSongName = songName;
         mArtistName = artistName;
@@ -82,6 +85,7 @@ public class Song {
         mAlbumId = albumId;
         mDuration = duration;
         mYear = year;
+        mData = Uri.parse(data);
     }
 
     //    public Song(MediaMetadata metadata) {

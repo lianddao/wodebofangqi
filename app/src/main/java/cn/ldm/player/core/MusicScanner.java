@@ -18,7 +18,7 @@ import java.util.ArrayList;
 /**
  * 音乐扫描器
  */
-final class MusicScanner {
+public class MusicScanner {
 
     private Context mContext;
     private static final String tag = MusicScanner.class.getSimpleName();

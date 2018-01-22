@@ -3,6 +3,7 @@ package cn.ldm.player.fragments;
 import android.app.Activity;
 import android.app.DialogFragment;
 import android.media.browse.MediaBrowser.MediaItem;
+import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 import java.util.List;
 
 import cn.ldm.player.R;
+import cn.ldm.player.dialog.FireMissilesDialogFragment;
 import cn.ldm.player.menu.CreateNewPlaylist;
 
 
@@ -58,7 +60,12 @@ public class MediaItemAdapter extends RecyclerView.Adapter<MediaItemAdapter.View
                 public boolean onLongClick(View v) {
                     Log.i(TAG, "onLongClick: ");
                     Activity activity = (Activity) holder.mView.getContext();
-                    CreateNewPlaylist.getInstance(null).show(activity.getFragmentManager(), "CreatePlaylist");
+//                    CreateNewPlaylist.getInstance(null).show(activity.getFragmentManager(), "CreatePlaylist");
+                    FireMissilesDialogFragment fireMissilesDialogFragment=new FireMissilesDialogFragment();
+                    Bundle bundle=new Bundle();
+                    bundle.putString("MUSIC-ID",item.getMediaId());
+                    fireMissilesDialogFragment.setArguments(bundle);
+                    fireMissilesDialogFragment.show(activity.getFragmentManager(),"XXX");
                     return true;
                 }
             });

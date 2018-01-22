@@ -15,6 +15,7 @@ public abstract class PermissionActivity extends Activity {
     private static final int REQUEST_PERMISSION_CODE = 0;
     private static final String[] REQUEST_PERMISSION_NAME = new String[]{
             Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.CAMERA,
             Manifest.permission.READ_CONTACTS
