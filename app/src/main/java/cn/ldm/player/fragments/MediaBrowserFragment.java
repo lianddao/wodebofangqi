@@ -103,6 +103,7 @@ public class MediaBrowserFragment extends Fragment {
         mListener = null;
     }
 
+    //谁需要外来数据,谁就声明接口
     public interface InteractionListener {
         MediaBrowser getMediaBrowser();
     }

@@ -8,14 +8,12 @@ import android.net.Uri;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static android.media.browse.MediaBrowser.MediaItem;
-import static cn.ldm.player.services.MyMediaBrowserService.LEAF_SEPARATOR;
 
 /**
  * Created by LDM on 2018.01.23.0023.
@@ -41,7 +39,8 @@ public class MediaItemDataSource {
         return Arrays.asList(ROOT_MEDIA_ITEMS);
     }
 
-    public static List<MediaItem> getByTitleFlag(Context context) {
+    //返回所有歌曲
+    public static List<MediaItem> getSongsByTitleFlag(Context context) {
         ArrayList<MediaMetadata> metadataArrayList = MediaMetadataDataSource.queryAll(context);
         ArrayList<MediaItem> mediaItems = new ArrayList<>(metadataArrayList.size());
         for (MediaMetadata metadata : metadataArrayList) {
@@ -57,19 +56,88 @@ public class MediaItemDataSource {
         return mediaItems;
     }
 
+    //返回所有专辑
     public static ArrayList<MediaItem> getByAlbumFlag(Context context) {
-        ConcurrentHashMap<String, List<MediaMetadata>> data = MediaMetadataDataSource.queryByAlbum(context);
-        ArrayList<MediaItem> mediaItems = new ArrayList<>(data.size());
-        for (Map.Entry<String, List<MediaMetadata>> entry : data.entrySet()) {
+        ConcurrentHashMap<String, List<MediaMetadata>> albums_songs = MediaMetadataDataSource.queryByAlbum(context);
+        ArrayList<MediaItem> mediaItems = new ArrayList<>(albums_songs.size());
+        for (Map.Entry<String, List<MediaMetadata>> entry : albums_songs.entrySet()) {
             MediaItem item = new MediaItem(
                     builder.setMediaId(MEDIA_ID_MUSIC_BY_ALBUM + CATEGORY_SEPARATOR + entry.getKey())
-                            .setTitle(entry.getKey())
+                            .setTitle(entry.getKey())//专辑名称
                             .build(),
                     MediaItem.FLAG_BROWSABLE
             );
             mediaItems.add(item);
         }
         return mediaItems;
+    }
+
+    //返回指定专辑的歌曲
+    public static ArrayList<MediaItem> getByAlbum(Context context, String album) {
+        ConcurrentHashMap<String, List<MediaMetadata>> albums_songs = MediaMetadataDataSource.queryByAlbum(context);
+        ArrayList<MediaItem> mediaItems = new ArrayList<>(albums_songs.size());
+        for (MediaMetadata metadata : albums_songs.get(album)) {
+            String mediaId = MEDIA_ID_MUSIC_BY_ALBUM + CATEGORY_SEPARATOR + album
+                    + LEAF_SEPARATOR + metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID);
+            MediaItem item = new MediaItem(
+                    builder.setMediaId(mediaId)
+                            .setMediaUri(Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_ART_URI)))
+                            .setTitle(metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE))
+                            .setSubtitle(metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE))
+                            .build(),
+                    MediaItem.FLAG_PLAYABLE
+            );
+            mediaItems.add(item);
+        }
+        return mediaItems;
+    }
+
+    //返回所有歌手
+    public static ArrayList<MediaItem> getByArtistFlag(Context context) {
+        ConcurrentHashMap<String, LinkedHashMap<String, MediaMetadata>> artists_albums = MediaMetadataDataSource.queryByArtist(context);
+        ArrayList<MediaItem> mediaItems = new ArrayList<>(artists_albums.size());
+        for (String artist : artists_albums.keySet()) {
+            String mediaId = MEDIA_ID_MUSIC_BY_ARTIST + CATEGORY_SEPARATOR + artist;
+            MediaItem item = new MediaItem(builder.setMediaId(mediaId).setTitle(artist).build(), MediaItem.FLAG_BROWSABLE);
+            mediaItems.add(item);
+        }
+        return mediaItems;
+    }
+
+    //返回指定歌手的所有专辑
+    public static ArrayList<MediaItem> getAlbumsByArtist(Context context, String artist) {
+        ConcurrentHashMap<String, LinkedHashMap<String, MediaMetadata>> artists_albums = MediaMetadataDataSource.queryByArtist(context);
+        ArrayList<MediaItem> mediaItems = new ArrayList<>();
+        for (String album : artists_albums.get(artist).keySet()) {
+            String mediaId = MEDIA_ID_MUSIC_BY_ARTIST + CATEGORY_SEPARATOR + artist + CATEGORY_SEPARATOR + album + LEAF_SEPARATOR;
+            MediaItem item = new MediaItem(builder.setMediaId(mediaId).setTitle(album).build(), MediaItem.FLAG_BROWSABLE);
+            mediaItems.add(item);
+        }
+        return mediaItems;
+    }
+
+    //为歌手按专辑获取歌曲
+    public static ArrayList<MediaItem> getSongsByAlbumForArtist(Context context, String artist, String album) {
+        ConcurrentHashMap<String, LinkedHashMap<String, MediaMetadata>> artists_albums = MediaMetadataDataSource.queryByArtist(context);
+        LinkedHashMap<String, MediaMetadata> albums_songs = artists_albums.get(artist);
+        if (albums_songs.containsKey(album)) {
+            List<MediaMetadata> metadataList = MediaMetadataDataSource.querySongsByAlbum(context, album);
+            ArrayList<MediaItem> mediaItems = new ArrayList<>(metadataList.size());
+            for (MediaMetadata metadata : metadataList) {
+                String mediaId = MEDIA_ID_MUSIC_BY_ARTIST + CATEGORY_SEPARATOR + artist + CATEGORY_SEPARATOR
+                        + album + LEAF_SEPARATOR + metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID);
+                MediaItem item = new MediaItem(
+                        builder.setMediaId(mediaId)
+                                .setMediaUri(Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_ART_URI)))
+                                .setTitle(metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE))
+                                .setSubtitle(metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE))
+                                .build(),
+                        MediaItem.FLAG_PLAYABLE);
+                mediaItems.add(item);
+            }
+            return mediaItems;
+        }
+        return null;
     }
 
 }

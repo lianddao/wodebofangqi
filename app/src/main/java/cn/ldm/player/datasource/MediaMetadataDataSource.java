@@ -7,6 +7,7 @@ import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -23,6 +24,7 @@ public class MediaMetadataDataSource {
     private static final String SELECTION_DEFAULT = MediaStore.Audio.Media.IS_MUSIC + "!=0";
     private static final String UNKNOWN = "unknown";
 
+    //返回所有歌曲
     public static ArrayList<MediaMetadata> queryAll(Context context) {
         Cursor cursor = null;
         try {
@@ -49,7 +51,6 @@ public class MediaMetadataDataSource {
                         .putString(MediaMetadata.METADATA_KEY_ART_URI, data)
                         .build();
                 result.add(mediaMetadata);
-                Log.i(TAG, "queryAll: ");
             } while (cursor.moveToNext());
             return result;
         } finally {
@@ -57,16 +58,38 @@ public class MediaMetadataDataSource {
         }
     }
 
+    //返回 ConcurrentHashMap<'专辑','专辑包含的歌曲'>>
     public static ConcurrentHashMap<String, List<MediaMetadata>> queryByAlbum(Context context) {
-        ArrayList<MediaMetadata> metadataArrayList = queryAll(context);
         ConcurrentHashMap<String, List<MediaMetadata>> result = new ConcurrentHashMap<>();
-        for (MediaMetadata metadata : metadataArrayList) {
+        for (MediaMetadata metadata : queryAll(context)) {
             String thisAlbum = metadata.getString(MediaMetadata.METADATA_KEY_ALBUM);
             if (thisAlbum == null) thisAlbum = UNKNOWN;
             if (!result.containsKey(thisAlbum)) {
                 result.put(thisAlbum, new ArrayList<MediaMetadata>());
             }
             result.get(thisAlbum).add(metadata);
+        }
+        return result;
+    }
+
+    public static List<MediaMetadata> querySongsByAlbum(Context context, String album) {
+        ConcurrentHashMap<String, List<MediaMetadata>> albums_songs = queryByAlbum(context);
+        return albums_songs.get(album);
+    }
+
+    //返回 ConcurrentHashMap<'歌手',Map<'专辑','专辑包含的歌曲'>>
+    public static ConcurrentHashMap<String, LinkedHashMap<String, MediaMetadata>> queryByArtist(Context context) {
+        ConcurrentHashMap<String, LinkedHashMap<String, MediaMetadata>> result = new ConcurrentHashMap<>();
+        for (MediaMetadata metadata : queryAll(context)) {
+            String thisArtist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST);
+            if (thisArtist == null) thisArtist = UNKNOWN;
+            String thisAlbum = metadata.getString(MediaMetadata.METADATA_KEY_ALBUM);
+            if (thisAlbum == null) thisAlbum = UNKNOWN;
+            if (!result.containsKey(thisArtist)) {
+                result.put(thisArtist, new LinkedHashMap<String, MediaMetadata>());
+            }
+            LinkedHashMap<String, MediaMetadata> albums = result.get(thisArtist);
+            albums.put(thisAlbum, metadata);
         }
         return result;
     }
