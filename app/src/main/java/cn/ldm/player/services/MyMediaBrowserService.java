@@ -5,7 +5,6 @@ import android.media.AudioManager;
 import android.media.MediaDescription;
 import android.media.MediaMetadata;
 import android.media.MediaPlayer;
-import android.media.MediaScannerConnection;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
@@ -24,6 +23,7 @@ import java.util.Map;
 
 import cn.ldm.player.core.MusicMetadataDataSource;
 import cn.ldm.player.core.MusicScanner;
+import cn.ldm.player.datasource.MediaItemDataSource;
 import cn.ldm.player.loader.PlaylistLoader;
 import cn.ldm.player.model.Playlist;
 import cn.ldm.player.model.Song;
@@ -67,73 +67,28 @@ public class MyMediaBrowserService extends MediaBrowserService {
         mediaItems.clear();
         switch (parentId) {
             case MEDIA_ID_ROOT:
-                //region ..
                 Log.i(TAG, "根据'__ROOT__'组织数据");
-                mediaItems.add(
-                        new MediaItem(
-                                new MediaDescription.Builder()
-                                        .setMediaId(MEDIA_ID_MUSIC_BY_TITLE)
-                                        .setTitle("全部歌曲")
-                                        .build(),
-                                MediaItem.FLAG_BROWSABLE)
-                );
-                mediaItems.add(
-                        new MediaItem(
-                                new MediaDescription.Builder()
-                                        .setMediaId(MEDIA_ID_MUSIC_BY_ARTIST)
-                                        .setTitle("歌手")
-                                        .build(),
-                                MediaItem.FLAG_BROWSABLE)
-                );
-                mediaItems.add(
-                        new MediaItem(
-                                new MediaDescription.Builder()
-                                        .setMediaId(MEDIA_ID_MUSIC_BY_ALBUM)
-                                        .setTitle("专辑")
-                                        .build(),
-                                MediaItem.FLAG_BROWSABLE)
-                );
-                mediaItems.add(
-                        new MediaItem(
-                                new MediaDescription.Builder()
-                                        .setMediaId(MEDIA_ID_MUSIC_BY_PLAYLIST)
-                                        .setTitle("播放列表")
-                                        .build(),
-                                MediaItem.FLAG_BROWSABLE
-                        )
-                );
-                //endregion
+                mediaItems.addAll(MediaItemDataSource.getByRootFlag());
                 break;
             case MEDIA_ID_MUSIC_BY_TITLE:
-                //region ..
                 Log.i(TAG, "根据'__BY_TITLE__'组织数据");
-                for (Map.Entry<String, MediaMetadata> entry : dataSource.getMusicListByTitle().entrySet()) {
-                    MediaItem item = new MediaItem(
-                            new MediaDescription.Builder()
-                                    .setMediaId(MEDIA_ID_MUSIC_BY_TITLE + LEAF_SEPARATOR + entry.getKey())
-                                    .setTitle(entry.getValue().getDescription().getTitle())
-                                    .setMediaUri(Uri.parse(entry.getValue().getString(MediaMetadata.METADATA_KEY_ART_URI)))
-                                    .build(),
-                            MediaItem.FLAG_PLAYABLE
-                    );
-                    mediaItems.add(item);
-                }
-                //endregion
+                mediaItems.addAll(MediaItemDataSource.getByTitleFlag(this));
                 break;
             case MEDIA_ID_MUSIC_BY_ALBUM:
                 //region ..
                 Log.i(TAG, "根据'__BY_ALBUM__'组织数据");
-                for (Map.Entry<String, List<MediaMetadata>> entry : dataSource.getMusicListByAlbum().entrySet()) {
-                    MediaItem item = new MediaItem(
-                            new MediaDescription.Builder()
-                                    .setMediaId(MEDIA_ID_MUSIC_BY_ALBUM + CATEGORY_SEPARATOR + entry.getKey())
-                                    .setTitle(entry.getKey())
-                                    .setDescription("专辑名称")
-                                    .build(),
-                            MediaItem.FLAG_BROWSABLE
-                    );
-                    mediaItems.add(item);
-                }
+                mediaItems.addAll( MediaItemDataSource.getByAlbumFlag(this));
+//                for (Map.Entry<String, List<MediaMetadata>> entry : dataSource.getMusicListByAlbum().entrySet()) {
+                //                    MediaItem item = new MediaItem(
+                //                            new MediaDescription.Builder()
+                //                                    .setMediaId(MEDIA_ID_MUSIC_BY_ALBUM + CATEGORY_SEPARATOR + entry.getKey())
+                //                                    .setTitle(entry.getKey())
+                //                                    .setDescription("专辑名称")
+                //                                    .build(),
+                //                            MediaItem.FLAG_BROWSABLE
+                //                    );
+                //                    mediaItems.add(item);
+                //                }
                 //endregion
                 break;
             case MEDIA_ID_MUSIC_BY_ARTIST:
@@ -292,7 +247,9 @@ public class MyMediaBrowserService extends MediaBrowserService {
                     if (item.getMediaId().equals(mediaId)) {
                         Log.d(TAG, "onPlayFromMediaId: " + mediaId);
                         _mediaPlayerAdapter.play(item);
-                        mSession.setMetadata(item);
+                        String id = MyMediaBrowserService.filterMediaId(mediaId);
+                        MediaMetadata metadata = MusicScanner.getInstance(getApplicationContext()).getMediaMetadataById(id);
+                        mSession.setMetadata(metadata);
                         break;
                     }
                 }
@@ -344,6 +301,16 @@ public class MyMediaBrowserService extends MediaBrowserService {
         public MyMediaBrowserService getService() {
             return MyMediaBrowserService.this;
         }
+    }
+
+    public static String filterMediaId(String mediaId) {
+        String[] split = mediaId.split(String.valueOf(LEAF_SEPARATOR));
+        if (split.length == 2) return mediaId.split(String.valueOf(LEAF_SEPARATOR))[1];
+        return mediaId.split(String.valueOf(LEAF_SEPARATOR))[2];
+    }
+
+    public static String filterMediaId(MediaItem mediaItem) {
+        return filterMediaId(mediaItem.getMediaId());
     }
 
 }

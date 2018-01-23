@@ -10,6 +10,7 @@ import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.v4.app.NavUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ public class MusicScanner {
     private Context mContext;
     private static final String tag = MusicScanner.class.getSimpleName();
     private static MusicScanner instance;
+    private static String SELECTION_IS_MUSIC = MediaStore.Audio.Media.IS_MUSIC + "!=0";
 
     public static MusicScanner getInstance(Context context) {
         synchronized (tag) {
@@ -43,7 +45,7 @@ public class MusicScanner {
      */
     public boolean retrieveMedia(@NonNull ArrayList<MediaMetadata> outMedias) {
         Cursor cursor = mContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                null, MediaStore.Audio.Media.IS_MUSIC + "!=0", null, null);
+                null, SELECTION_IS_MUSIC, null, null);
         if (cursor == null) return false;
         if (!cursor.moveToFirst()) {
             cursor.close();
@@ -95,5 +97,40 @@ public class MusicScanner {
         return bitmap;
     }
     //endregion
+
+    public MediaMetadata getMediaMetadataById(String mediaId) {
+        return _queryByMediaId(mediaId);
+    }
+
+    private MediaMetadata _queryByMediaId(long mediaId) {
+        Cursor cursor = mContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                null, SELECTION_IS_MUSIC, null, null);
+        if (cursor == null) return null;
+        if (!cursor.moveToFirst()) {
+            cursor.close();
+            return null;
+        }
+        String id = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID));
+        String title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
+        String artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+        String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
+        long duration = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
+        String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+        MediaMetadata mediaMetadata = new MediaMetadata.Builder()
+                .putString(MediaMetadata.METADATA_KEY_MEDIA_ID, id)
+                .putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, title)
+                .putString(MediaMetadata.METADATA_KEY_ARTIST, artist)
+                .putString(MediaMetadata.METADATA_KEY_ALBUM, album)
+                .putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, artist + " - " + album)
+                .putLong(MediaMetadata.METADATA_KEY_DURATION, duration)
+                .putString(MediaMetadata.METADATA_KEY_ART_URI, data)
+                .build();
+        cursor.close();
+        return mediaMetadata;
+    }
+
+    private MediaMetadata _queryByMediaId(String mediaId) {
+        return _queryByMediaId(Long.valueOf(mediaId));
+    }
 
 }

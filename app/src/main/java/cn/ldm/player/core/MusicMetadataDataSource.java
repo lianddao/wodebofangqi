@@ -2,6 +2,7 @@ package cn.ldm.player.core;
 
 import android.content.Context;
 import android.media.MediaMetadata;
+import android.media.browse.MediaBrowser;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -10,15 +11,18 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import cn.ldm.player.services.MyMediaBrowserService;
+
 /**
  * '音乐元数据'数据源
  */
 public final class MusicMetadataDataSource {
+    private static final String TAG = MusicMetadataDataSource.class.getSimpleName();
 
     private Context mContext;
     public final static String UNKNOWN = "unknown";
     private static MusicMetadataDataSource instance;
-    private ArrayList<MediaMetadata> mMusicList;
+    private ArrayList<MediaMetadata> _musicList;
     private ConcurrentMap<String, MediaMetadata> mMusicListByTitle;
     private ConcurrentMap<String, Map<String, MediaMetadata>> mMusicListByArtist;   // ConcurrentMap<歌手,Map<专辑,元数据>>
     private ConcurrentMap<String, List<MediaMetadata>> mMusicListByAlbum;           // ConcurrentMap<专辑,List<元数据>>
@@ -28,7 +32,7 @@ public final class MusicMetadataDataSource {
             if (instance == null) {
                 instance = new MusicMetadataDataSource();
                 instance.mContext = context;
-                instance.mMusicList = new ArrayList<>();
+                instance._musicList = new ArrayList<>();
                 instance.mMusicListByTitle = new ConcurrentHashMap<>();
                 instance.mMusicListByArtist = new ConcurrentHashMap<>();
                 instance.mMusicListByAlbum = new ConcurrentHashMap<>();
@@ -50,7 +54,7 @@ public final class MusicMetadataDataSource {
         String thisMusic = metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE);
         if (thisMusic == null) thisMusic = UNKNOWN;
         mMusicListByTitle.put(metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID), metadata);
-        mMusicList.add(metadata);
+        _musicList.add(metadata);
     }
 
     public void toStringTitleList() {
@@ -64,7 +68,7 @@ public final class MusicMetadataDataSource {
     }
 
     public Iterable<MediaMetadata> getMusicList() {
-        return mMusicList;
+        return _musicList;
     }
     //endregion
 
@@ -134,5 +138,17 @@ public final class MusicMetadataDataSource {
         return mMusicListByAlbum.get(album);
     }
     //endregion
+
+    public MediaMetadata getMediaMetadataById(MediaBrowser.MediaItem mediaItem) {
+        String mediaId = MyMediaBrowserService.filterMediaId(mediaItem);
+        for (MediaMetadata metadata : _musicList) {
+            Log.i(TAG, "getMediaMetadataById: " + metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
+            if (metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID).equals(mediaId)) {
+                return metadata;
+            }
+        }
+        throw new AssertionError("传递的MediaId不正确");
+
+    }
 
 }
