@@ -57,6 +57,7 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
         );
     }
 
+    https://www.jianshu.com/p/224e2479da18
 
     @Override
     public void initAppAfterRequestPermission() {

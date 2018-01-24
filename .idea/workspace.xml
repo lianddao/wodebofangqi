@@ -12,22 +12,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="50a80899-f51e-46ad-867b-bcf521f83598" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/build/android-profile/profile-2018-01-24-21-00-42-233.json" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/build/android-profile/profile-2018-01-24-21-00-42-233.rawproto" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gradle/4.1/fileHashes/fileHashes.bin" afterPath="$PROJECT_DIR$/.gradle/4.1/fileHashes/fileHashes.bin" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gradle/4.1/fileHashes/fileHashes.lock" afterPath="$PROJECT_DIR$/.gradle/4.1/fileHashes/fileHashes.lock" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gradle/4.1/javaCompile/classAnalysis.bin" afterPath="$PROJECT_DIR$/.gradle/4.1/javaCompile/classAnalysis.bin" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gradle/4.1/javaCompile/javaCompile.lock" afterPath="$PROJECT_DIR$/.gradle/4.1/javaCompile/javaCompile.lock" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gradle/4.1/javaCompile/taskHistory.bin" afterPath="$PROJECT_DIR$/.gradle/4.1/javaCompile/taskHistory.bin" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gradle/4.1/taskHistory/fileSnapshots.bin" afterPath="$PROJECT_DIR$/.gradle/4.1/taskHistory/fileSnapshots.bin" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gradle/4.1/taskHistory/taskHistory.bin" afterPath="$PROJECT_DIR$/.gradle/4.1/taskHistory/taskHistory.bin" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gradle/4.1/taskHistory/taskHistory.lock" afterPath="$PROJECT_DIR$/.gradle/4.1/taskHistory/taskHistory.lock" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/cn/ldm/player/MainActivity.java" afterPath="$PROJECT_DIR$/app/src/main/java/cn/ldm/player/MainActivity.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/cn/ldm/player/fragments/MediaBrowserFragment.java" afterPath="$PROJECT_DIR$/app/src/main/java/cn/ldm/player/fragments/MediaBrowserFragment.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/cn/ldm/player/model/SongInfo.java" afterPath="$PROJECT_DIR$/app/src/main/java/cn/ldm/player/model/SongInfo.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/cn/ldm/player/player/MediaPlayerAdapter.java" afterPath="$PROJECT_DIR$/app/src/main/java/cn/ldm/player/player/MediaPlayerAdapter.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/src/main/java/cn/ldm/player/services/MyMediaBrowserService.java" afterPath="$PROJECT_DIR$/app/src/main/java/cn/ldm/player/services/MyMediaBrowserService.java" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -54,11 +39,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="525">
-      <file leaf-file-name="MainActivity.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="MainActivity.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/src/main/java/cn/ldm/player/MainActivity.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-564">
-              <caret line="22" column="38" lean-forward="false" selection-start-line="22" selection-start-column="25" selection-end-line="22" selection-end-column="38" />
+            <state relative-caret-position="591">
+              <caret line="59" column="42" lean-forward="true" selection-start-line="59" selection-start-column="42" selection-end-line="59" selection-end-column="42" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#1565#2670#0" expanded="true" />
@@ -71,7 +56,7 @@
       <file leaf-file-name="MediaBrowserFragment.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/src/main/java/cn/ldm/player/fragments/MediaBrowserFragment.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="693">
+            <state relative-caret-position="591">
               <caret line="100" column="5" lean-forward="false" selection-start-line="100" selection-start-column="5" selection-end-line="100" selection-end-column="5" />
               <folding>
                 <element signature="method#MediaBrowserFragment#0;class#MediaBrowserFragment#0" expanded="false" />
@@ -108,7 +93,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="AndroidManifest.xml" pinned="false" current-in-tab="true">
+      <file leaf-file-name="AndroidManifest.xml" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/src/main/AndroidManifest.xml">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="315">
@@ -1961,11 +1946,11 @@
         <option value="C:/Android/sdk/sources/android-25/android/service/media/MediaBrowserService.java" />
         <option value="C:/Android/sdk/sources/android-25/android/media/session/MediaSession.java" />
         <option value="C:/Android/sdk/sources/android-25/android/app/Service.java" />
-        <option value="$PROJECT_DIR$/app/src/main/java/cn/ldm/player/MainActivity.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/cn/ldm/player/fragments/MediaBrowserFragment.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/cn/ldm/player/services/MyMediaBrowserService.java" />
         <option value="$PROJECT_DIR$/app/src/main/java/cn/ldm/player/player/MediaPlayerAdapter.java" />
         <option value="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" />
+        <option value="$PROJECT_DIR$/app/src/main/java/cn/ldm/player/MainActivity.java" />
       </list>
     </option>
   </component>
@@ -2290,7 +2275,7 @@
       </Profilers>
       <method>
         <option name="Android.Gradle.BeforeRunTask" enabled="true" />
-        <option name="com.android.instantApps.provision.BeforeRunTask" enabled="true" clearCache="false" clearProvisionedDevices="false" myTimestamp="1516817913275" />
+        <option name="com.android.instantApps.provision.BeforeRunTask" enabled="true" clearCache="false" clearProvisionedDevices="false" myTimestamp="1516818134433" />
       </method>
     </configuration>
     <configuration default="true" type="AndroidJUnit" factoryName="Android JUnit">
@@ -2363,7 +2348,7 @@
       <option name="ACTIVITY_CLASS" value="" />
       <method>
         <option name="Android.Gradle.BeforeRunTask" enabled="true" />
-        <option name="com.android.instantApps.provision.BeforeRunTask" enabled="true" clearCache="false" clearProvisionedDevices="false" myTimestamp="1516817913276" />
+        <option name="com.android.instantApps.provision.BeforeRunTask" enabled="true" clearCache="false" clearProvisionedDevices="false" myTimestamp="1516818134433" />
       </method>
     </configuration>
     <configuration default="true" type="AndroidTestRunConfigurationType" factoryName="Android Instrumented Tests">
@@ -2411,7 +2396,7 @@
       </Profilers>
       <method>
         <option name="Android.Gradle.BeforeRunTask" enabled="true" />
-        <option name="com.android.instantApps.provision.BeforeRunTask" enabled="true" clearCache="false" clearProvisionedDevices="false" myTimestamp="1516817913276" />
+        <option name="com.android.instantApps.provision.BeforeRunTask" enabled="true" clearCache="false" clearProvisionedDevices="false" myTimestamp="1516818134433" />
       </method>
     </configuration>
     <configuration default="true" type="Application" factoryName="Application">
@@ -2594,7 +2579,7 @@
       <option name="ACTIVITY_CLASS" value="" />
       <method>
         <option name="Android.Gradle.BeforeRunTask" enabled="true" />
-        <option name="com.android.instantApps.provision.BeforeRunTask" enabled="true" clearCache="false" clearProvisionedDevices="false" myTimestamp="1516817913278" />
+        <option name="com.android.instantApps.provision.BeforeRunTask" enabled="true" clearCache="false" clearProvisionedDevices="false" myTimestamp="1516818134433" />
       </method>
     </configuration>
     <list size="2">
@@ -3157,38 +3142,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/cn/ldm/player/fragments/MediaBrowserFragment.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="693">
-          <caret line="100" column="5" lean-forward="false" selection-start-line="100" selection-start-column="5" selection-end-line="100" selection-end-column="5" />
-          <folding>
-            <element signature="method#MediaBrowserFragment#0;class#MediaBrowserFragment#0" expanded="false" />
-            <element signature="method#newInstance#0;class#MediaBrowserFragment#0" expanded="false" />
-            <element signature="method#onCreateView#0;class#MediaBrowserFragment#0" expanded="false" />
-            <element signature="method#onAttach#0;class#MediaBrowserFragment#0" expanded="false" />
-            <element signature="method#onDetach#0;class#MediaBrowserFragment#0" expanded="false" />
-            <element signature="class#InteractionListener#0;class#MediaBrowserFragment#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://C:/Android/sdk/sources/android-25/android/app/Service.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="407">
           <caret line="670" column="22" lean-forward="false" selection-start-line="670" selection-start-column="22" selection-end-line="670" selection-end-column="22" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/cn/ldm/player/MainActivity.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-564">
-          <caret line="22" column="38" lean-forward="false" selection-start-line="22" selection-start-column="25" selection-end-line="22" selection-end-column="38" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#1565#2670#0" expanded="true" />
-            <element signature="e#2669#2670#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -3222,6 +3180,33 @@
       </provider>
       <provider editor-type-id="android-manifest">
         <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/cn/ldm/player/fragments/MediaBrowserFragment.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="591">
+          <caret line="100" column="5" lean-forward="false" selection-start-line="100" selection-start-column="5" selection-end-line="100" selection-end-column="5" />
+          <folding>
+            <element signature="method#MediaBrowserFragment#0;class#MediaBrowserFragment#0" expanded="false" />
+            <element signature="method#newInstance#0;class#MediaBrowserFragment#0" expanded="false" />
+            <element signature="method#onCreateView#0;class#MediaBrowserFragment#0" expanded="false" />
+            <element signature="method#onAttach#0;class#MediaBrowserFragment#0" expanded="false" />
+            <element signature="method#onDetach#0;class#MediaBrowserFragment#0" expanded="false" />
+            <element signature="class#InteractionListener#0;class#MediaBrowserFragment#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/src/main/java/cn/ldm/player/MainActivity.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="591">
+          <caret line="59" column="42" lean-forward="true" selection-start-line="59" selection-start-column="42" selection-end-line="59" selection-end-column="42" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#1565#2670#0" expanded="true" />
+            <element signature="e#2669#2670#0" expanded="true" />
+          </folding>
+        </state>
       </provider>
     </entry>
   </component>
