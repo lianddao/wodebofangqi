@@ -80,7 +80,9 @@ public class MediaPlayerAdapter {
 
     public void play(MediaMetadata metadata) {
         try {
-            play(metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID), metadata.getDescription().getMediaUri());
+            metadata.getDescription().getMediaUri() 为空
+            play(metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID),
+                 Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_ART_URI))   );
         } catch (Exception ex) {
         }
     }
@@ -94,8 +96,6 @@ public class MediaPlayerAdapter {
     }
 
     public void play(String mediaId, Uri data) throws Exception {
-        mediaId = _filterMediaId(mediaId);
-        Log.i(TAG, "play: " + mediaId + "," + data.toString());
         if (isInitializing()) {
             Log.i(TAG, "play: 初始化");
         } else {

@@ -1,10 +1,8 @@
 package cn.ldm.player.services;
 
 import android.app.Notification;
-import android.media.AudioManager;
 import android.media.MediaDescription;
 import android.media.MediaMetadata;
-import android.media.MediaPlayer;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
@@ -184,38 +182,31 @@ public class MyMediaBrowserService extends MediaBrowserService {
 
             @Override
             public void onPlayFromMediaId(String mediaId, Bundle extras) {
-                //                MediaMetadata metadata = MusicScanner.getInstance(getApplicationContext()).getMediaMetadataById(mediaId);
                 MediaMetadata metadata = MediaMetadataDataSource.queryById(getApplicationContext(), mediaId).getMediaMetadata();
                 Log.i(TAG, "onPlayFromMediaId: " + metadata.getDescription().getTitle());
                 _mediaSession.setActive(true);
                 _mediaSession.setMetadata(metadata);
                 _mediaPlayerAdapter.play(metadata);
-                                loadNotification();
+                loadNotification();
             }
         });
     }
 
     public void loadNotification() {
+        Log.i(TAG, "loadNotification: ");
         MediaController controller = _mediaSession.getController();
-        MediaMetadata metadata = controller.getMetadata();// TODO: 2018.01.24.0024 不起作用 
-        //        MediaDescription description = metadata.getDescription();
+        MediaMetadata metadata = controller.getMetadata();
         Notification.Builder builder = new Notification.Builder(getApplicationContext());
-        try {
-            Log.i(TAG, "loadNotification: title = " + metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE));
-            Log.i(TAG, "loadNotification: contentText = " + metadata.getString(MediaMetadata.METADATA_KEY_ARTIST) + metadata.getString
-                    (MediaMetadata.METADATA_KEY_ALBUM));
-            builder
-                    .setContentTitle(metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE))
-                    .setContentText(metadata.getString(MediaMetadata.METADATA_KEY_ARTIST) + " - " + metadata.getString(MediaMetadata.METADATA_KEY_ALBUM))
-                    //                    .setContentText(description.getSubtitle() + " - " + description.getDescription())
-                    .setSmallIcon(android.R.drawable.ic_media_play)//通知栏顶部的图片
-                    //                    .setLargeIcon(MediaScanner.extractAlbumCover(this, metadata))//展开通知栏所展示的图片
-                    .setContentIntent(controller.getSessionActivity())
-                    .setVisibility(Notification.VISIBILITY_PUBLIC);
-            //                    .setStyle(new Notification.MediaStyle().setMediaSession(mediaSession.getSessionToken()));
-        } catch (Exception ex) {
-            Log.e("abc", ex.toString());
-        }
+        String title = metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE);
+        String subtitle = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST) + " - "
+                + metadata.getString(MediaMetadata.METADATA_KEY_ALBUM);
+        builder.setContentTitle(title)
+                .setContentText(subtitle)
+                .setSmallIcon(android.R.drawable.ic_media_play)//通知栏顶部的图片
+                .setLargeIcon(MusicScanner.getInstance(this).retrieveAlbumArt(metadata))//展开通知栏所展示的图片
+                .setContentIntent(controller.getSessionActivity())
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setStyle(new Notification.MediaStyle().setMediaSession(_mediaSession.getSessionToken()));
 
         MyMediaBrowserService.this.startForeground(1, builder.build());
     }

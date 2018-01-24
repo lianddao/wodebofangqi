@@ -32,6 +32,7 @@ public class SongInfo {
                 .putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, _artist + " - " + _album)
                 .putLong(MediaMetadata.METADATA_KEY_DURATION, _duration)
                 .putString(MediaMetadata.METADATA_KEY_ART_URI, data)
+                .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI,data)
                 .build();
         _mediaMetadata = mediaMetadata;
         _mediaItem = new MediaBrowser.MediaItem(
