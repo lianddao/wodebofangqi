@@ -23,6 +23,7 @@ import java.util.List;
 import cn.ldm.player.core.MusicMetadataDataSource;
 import cn.ldm.player.core.MusicScanner;
 import cn.ldm.player.datasource.MediaItemDataSource;
+import cn.ldm.player.datasource.MediaMetadataDataSource;
 import cn.ldm.player.loader.PlaylistLoader;
 import cn.ldm.player.model.Playlist;
 import cn.ldm.player.model.Song;
@@ -33,17 +34,17 @@ import cn.ldm.player.player.MediaPlayerAdapter;
  * 我的媒体浏览服务
  */
 public class MyMediaBrowserService extends MediaBrowserService {
+
     private static final String TAG = MyMediaBrowserService.class.getSimpleName();
-    public final static String MEDIA_ID_ROOT = "__ROOT__";
-    public final static String MEDIA_ID_MUSIC_BY_TITLE = "__BY_TITLE__";
-    public final static String MEDIA_ID_MUSIC_BY_ARTIST = "__BY_ARTIST__";
-    public final static String MEDIA_ID_MUSIC_BY_ALBUM = "__BY_ALBUM__";
-    public final static String MEDIA_ID_MUSIC_BY_PLAYLIST = "__BY_PLAYLIST__";
+    private static final String MEDIA_ID_ROOT = "__ROOT__";
+    private static final String MEDIA_ID_MUSIC_BY_TITLE = "__BY_TITLE__";
+    private static final String MEDIA_ID_MUSIC_BY_ARTIST = "__BY_ARTIST__";
+    private static final String MEDIA_ID_MUSIC_BY_ALBUM = "__BY_ALBUM__";
+    private static final String MEDIA_ID_MUSIC_BY_PLAYLIST = "__BY_PLAYLIST__";
 
     private MediaPlayerAdapter _mediaPlayerAdapter;
 
-    private MediaSession mSession;
-    private MediaPlayer mMediaPlayer;
+    private MediaSession _mediaSession;
 
     private List<MediaItem> mediaItems = new ArrayList<>();
 
@@ -141,10 +142,10 @@ public class MyMediaBrowserService extends MediaBrowserService {
     @Override
     public void onCreate() {
         super.onCreate();
-        mSession = new MediaSession(this, TAG);
-        setSessionToken(mSession.getSessionToken());
-        _mediaPlayerAdapter = new MediaPlayerAdapter(mSession);
-        mSession.setCallback(new MediaSession.Callback() {
+        _mediaSession = new MediaSession(this, TAG);
+        setSessionToken(_mediaSession.getSessionToken());
+        _mediaPlayerAdapter = new MediaPlayerAdapter(_mediaSession);
+        _mediaSession.setCallback(new MediaSession.Callback() {
             private List<MediaSession.QueueItem> mPlaylist = new ArrayList<>();
             private int mQueueIndex = -1;
             private MediaMetadata mPreparedMedia;
@@ -157,11 +158,13 @@ public class MyMediaBrowserService extends MediaBrowserService {
             @Override
             public void onPrepareFromMediaId(String mediaId, Bundle extras) {
                 super.onPrepareFromMediaId(mediaId, extras);
+                Log.i(TAG, "onPrepareFromMediaId: ");
             }
 
             @Override
             public void onPrepare() {
                 super.onPrepare();
+                Log.i(TAG, "onPrepare: ");
             }
 
             @Override
@@ -181,24 +184,19 @@ public class MyMediaBrowserService extends MediaBrowserService {
 
             @Override
             public void onPlayFromMediaId(String mediaId, Bundle extras) {
-                for (MediaItem item : mediaItems) {
-                    if (item.getMediaId().equals(mediaId)) {
-                        Log.d(TAG, "onPlayFromMediaId: " + mediaId);
-                        _mediaPlayerAdapter.play(item);
-                        String id = MyMediaBrowserService.filterMediaId(mediaId);
-                        MediaMetadata metadata = MusicScanner.getInstance(getApplicationContext()).getMediaMetadataById(id);
-                        // TODO: 2018.01.24.0024 不起作用
-                        mSession.setMetadata(metadata);
-                        break;
-                    }
-                }
-                loadNotification();
+                //                MediaMetadata metadata = MusicScanner.getInstance(getApplicationContext()).getMediaMetadataById(mediaId);
+                MediaMetadata metadata = MediaMetadataDataSource.queryById(getApplicationContext(), mediaId).getMediaMetadata();
+                Log.i(TAG, "onPlayFromMediaId: " + metadata.getDescription().getTitle());
+                _mediaSession.setActive(true);
+                _mediaSession.setMetadata(metadata);
+                _mediaPlayerAdapter.play(metadata);
+                                loadNotification();
             }
         });
     }
 
     public void loadNotification() {
-        MediaController controller = mSession.getController();
+        MediaController controller = _mediaSession.getController();
         MediaMetadata metadata = controller.getMetadata();// TODO: 2018.01.24.0024 不起作用 
         //        MediaDescription description = metadata.getDescription();
         Notification.Builder builder = new Notification.Builder(getApplicationContext());
@@ -220,16 +218,6 @@ public class MyMediaBrowserService extends MediaBrowserService {
         }
 
         MyMediaBrowserService.this.startForeground(1, builder.build());
-    }
-
-    private void createMediaPlayerIfNeeded() {
-        Log.d(TAG, "createMediaPlayerIfNeeded. needed? " + (mMediaPlayer == null));
-        if (mMediaPlayer == null) {
-            mMediaPlayer = new MediaPlayer();
-            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        } else {
-            mMediaPlayer.reset();
-        }
     }
 
     public static final char CATEGORY_SEPARATOR = 31;  //单元分隔符 US ␟

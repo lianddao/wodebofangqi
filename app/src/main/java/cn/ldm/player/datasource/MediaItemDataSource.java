@@ -5,13 +5,14 @@ import android.media.MediaDescription;
 import android.media.MediaMetadata;
 import android.net.Uri;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import cn.ldm.player.model.SongInfo;
 
 import static android.media.browse.MediaBrowser.MediaItem;
 
@@ -41,7 +42,12 @@ public class MediaItemDataSource {
 
     //返回所有歌曲
     public static List<MediaItem> getSongsByTitleFlag(Context context) {
-        ArrayList<MediaMetadata> metadataArrayList = MediaMetadataDataSource.queryAll(context);
+        ArrayList<SongInfo> songInfoArrayList = MediaMetadataDataSource.queryAll(context);
+        ArrayList<MediaMetadata> metadataArrayList = new ArrayList<>(songInfoArrayList.size());
+        for (SongInfo songInfo : songInfoArrayList) {
+            metadataArrayList.add(songInfo.getMediaMetadata());
+        }
+
         ArrayList<MediaItem> mediaItems = new ArrayList<>(metadataArrayList.size());
         for (MediaMetadata metadata : metadataArrayList) {
             MediaDescription description = new MediaDescription.Builder()
@@ -58,9 +64,9 @@ public class MediaItemDataSource {
 
     //返回所有专辑
     public static ArrayList<MediaItem> getByAlbumFlag(Context context) {
-        ConcurrentHashMap<String, List<MediaMetadata>> albums_songs = MediaMetadataDataSource.queryByAlbum(context);
+        ConcurrentHashMap<String, List<SongInfo>> albums_songs = MediaMetadataDataSource.queryByAlbum(context);
         ArrayList<MediaItem> mediaItems = new ArrayList<>(albums_songs.size());
-        for (Map.Entry<String, List<MediaMetadata>> entry : albums_songs.entrySet()) {
+        for (Map.Entry<String, List<SongInfo>> entry : albums_songs.entrySet()) {
             MediaItem item = new MediaItem(
                     builder.setMediaId(MEDIA_ID_MUSIC_BY_ALBUM + CATEGORY_SEPARATOR + entry.getKey())
                             .setTitle(entry.getKey())//专辑名称
@@ -74,16 +80,16 @@ public class MediaItemDataSource {
 
     //返回指定专辑的歌曲
     public static ArrayList<MediaItem> getByAlbum(Context context, String album) {
-        ConcurrentHashMap<String, List<MediaMetadata>> albums_songs = MediaMetadataDataSource.queryByAlbum(context);
+        ConcurrentHashMap<String, List<SongInfo>> albums_songs = MediaMetadataDataSource.queryByAlbum(context);
         ArrayList<MediaItem> mediaItems = new ArrayList<>(albums_songs.size());
-        for (MediaMetadata metadata : albums_songs.get(album)) {
+        for (SongInfo songInfo : albums_songs.get(album)) {
             String mediaId = MEDIA_ID_MUSIC_BY_ALBUM + CATEGORY_SEPARATOR + album
-                    + LEAF_SEPARATOR + metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID);
+                    + LEAF_SEPARATOR + songInfo.getId();
             MediaItem item = new MediaItem(
                     builder.setMediaId(mediaId)
-                            .setMediaUri(Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_ART_URI)))
-                            .setTitle(metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE))
-                            .setSubtitle(metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE))
+                            .setMediaUri(songInfo.getUri())
+                            .setTitle(songInfo.getTitle())
+                            .setSubtitle(songInfo.getSubtitle())
                             .build(),
                     MediaItem.FLAG_PLAYABLE
             );
@@ -94,7 +100,7 @@ public class MediaItemDataSource {
 
     //返回所有歌手
     public static ArrayList<MediaItem> getByArtistFlag(Context context) {
-        ConcurrentHashMap<String, LinkedHashMap<String, MediaMetadata>> artists_albums = MediaMetadataDataSource.queryByArtist(context);
+        ConcurrentHashMap<String, LinkedHashMap<String, SongInfo>> artists_albums = MediaMetadataDataSource.queryByArtist(context);
         ArrayList<MediaItem> mediaItems = new ArrayList<>(artists_albums.size());
         for (String artist : artists_albums.keySet()) {
             String mediaId = MEDIA_ID_MUSIC_BY_ARTIST + CATEGORY_SEPARATOR + artist;
@@ -106,7 +112,7 @@ public class MediaItemDataSource {
 
     //返回指定歌手的所有专辑
     public static ArrayList<MediaItem> getAlbumsByArtist(Context context, String artist) {
-        ConcurrentHashMap<String, LinkedHashMap<String, MediaMetadata>> artists_albums = MediaMetadataDataSource.queryByArtist(context);
+        ConcurrentHashMap<String, LinkedHashMap<String, SongInfo>> artists_albums = MediaMetadataDataSource.queryByArtist(context);
         ArrayList<MediaItem> mediaItems = new ArrayList<>();
         for (String album : artists_albums.get(artist).keySet()) {
             String mediaId = MEDIA_ID_MUSIC_BY_ARTIST + CATEGORY_SEPARATOR + artist + CATEGORY_SEPARATOR + album + LEAF_SEPARATOR;
@@ -118,19 +124,19 @@ public class MediaItemDataSource {
 
     //为歌手按专辑获取歌曲
     public static ArrayList<MediaItem> getSongsByAlbumForArtist(Context context, String artist, String album) {
-        ConcurrentHashMap<String, LinkedHashMap<String, MediaMetadata>> artists_albums = MediaMetadataDataSource.queryByArtist(context);
-        LinkedHashMap<String, MediaMetadata> albums_songs = artists_albums.get(artist);
+        ConcurrentHashMap<String, LinkedHashMap<String, SongInfo>> artists_albums = MediaMetadataDataSource.queryByArtist(context);
+        LinkedHashMap<String, SongInfo> albums_songs = artists_albums.get(artist);
         if (albums_songs.containsKey(album)) {
-            List<MediaMetadata> metadataList = MediaMetadataDataSource.querySongsByAlbum(context, album);
+            List<SongInfo> metadataList = MediaMetadataDataSource.querySongsByAlbum(context, album);
             ArrayList<MediaItem> mediaItems = new ArrayList<>(metadataList.size());
-            for (MediaMetadata metadata : metadataList) {
+            for (SongInfo songInfo : metadataList) {
                 String mediaId = MEDIA_ID_MUSIC_BY_ARTIST + CATEGORY_SEPARATOR + artist + CATEGORY_SEPARATOR
-                        + album + LEAF_SEPARATOR + metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID);
+                        + album + LEAF_SEPARATOR + songInfo.getId();
                 MediaItem item = new MediaItem(
                         builder.setMediaId(mediaId)
-                                .setMediaUri(Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_ART_URI)))
-                                .setTitle(metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE))
-                                .setSubtitle(metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE))
+                                .setMediaUri(songInfo.getUri())
+                                .setTitle(songInfo.getTitle())
+                                .setSubtitle(songInfo.getSubtitle())
                                 .build(),
                         MediaItem.FLAG_PLAYABLE);
                 mediaItems.add(item);

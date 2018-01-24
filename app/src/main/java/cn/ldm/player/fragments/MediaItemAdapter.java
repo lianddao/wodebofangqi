@@ -55,12 +55,12 @@ public class MediaItemAdapter extends RecyclerView.Adapter<MediaItemAdapter.View
         });
 
         if (item.isPlayable()) {
+            //region 长按加入播放列表
             holder.mView.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
                     Log.i(TAG, "onLongClick: ");
                     Activity activity = (Activity) holder.mView.getContext();
-//                    CreateNewPlaylist.getInstance(null).show(activity.getFragmentManager(), "CreatePlaylist");
                     FireMissilesDialogFragment fireMissilesDialogFragment=new FireMissilesDialogFragment();
                     Bundle bundle=new Bundle();
                     bundle.putString("MUSIC-ID",item.getMediaId());
@@ -69,6 +69,7 @@ public class MediaItemAdapter extends RecyclerView.Adapter<MediaItemAdapter.View
                     return true;
                 }
             });
+            //endregion
         }
 
     }

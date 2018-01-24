@@ -18,16 +18,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.ldm.player.R;
+import cn.ldm.player.services.MyMediaBrowserService;
 
 
 public class MediaBrowserFragment extends Fragment {
 
     private static final String TAG = MediaBrowserFragment.class.getSimpleName();
 
-    private MediaItem mParentMediaItem;
+    private MediaItem _parentMediaItem;
     private InteractionListener mListener;
-    private List<MediaItem> mMediaItems;
-    private MediaItemAdapter mMediaItemAdapter;
+    private List<MediaItem> _mediaItems;
+    private MediaItemAdapter _mediaItemAdapter;
     private MediaItemAdapter.OnMediaItemClickListener onMediaItemClickListener = new MediaItemAdapter.OnMediaItemClickListener() {
         @Override
         public void onClick(MediaItem mediaItem) {
@@ -37,27 +38,22 @@ public class MediaBrowserFragment extends Fragment {
                 transaction.addToBackStack(null);
                 transaction.commit();
             } else {
-                getActivity().getMediaController().getTransportControls().playFromMediaId(mediaItem.getMediaId(), null);
+                String mediaId= MyMediaBrowserService.filterMediaId(mediaItem.getMediaId());
+                getActivity().getMediaController().getTransportControls().playFromMediaId(mediaId, null);
             }
         }
     };
 
     public MediaBrowserFragment() {
-        mMediaItems = new ArrayList<>();
-        mMediaItemAdapter = new MediaItemAdapter(mMediaItems, onMediaItemClickListener);
+        _mediaItems = new ArrayList<>();
+        _mediaItemAdapter = new MediaItemAdapter(_mediaItems, onMediaItemClickListener);
     }
 
     public static MediaBrowserFragment newInstance(MediaItem parentMediaItem) {
         MediaBrowserFragment fragment = new MediaBrowserFragment();
-        fragment.mParentMediaItem = parentMediaItem;
+        fragment._parentMediaItem = parentMediaItem;
         return fragment;
     }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -67,19 +63,19 @@ public class MediaBrowserFragment extends Fragment {
             Context context = view.getContext();
             RecyclerView recyclerView = (RecyclerView) view;
             recyclerView.setLayoutManager(new LinearLayoutManager(context));
-            recyclerView.setAdapter(mMediaItemAdapter);
+            recyclerView.setAdapter(_mediaItemAdapter);
             recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL));
 
             MediaBrowser mediaBrowser = mListener.getMediaBrowser();
-            mediaBrowser.unsubscribe(mParentMediaItem.getMediaId());
-            mediaBrowser.subscribe(mParentMediaItem.getMediaId(), new MediaBrowser.SubscriptionCallback() {
+            mediaBrowser.unsubscribe(_parentMediaItem.getMediaId());
+            mediaBrowser.subscribe(_parentMediaItem.getMediaId(), new MediaBrowser.SubscriptionCallback() {
                 @Override
                 public void onChildrenLoaded(@NonNull String parentId, @NonNull List<MediaItem> children) {
-                    mMediaItems.clear();
+                    _mediaItems.clear();
                     for (MediaItem item : children) {
-                        mMediaItems.add(item);
+                        _mediaItems.add(item);
                     }
-                    mMediaItemAdapter.notifyDataSetChanged();
+                    _mediaItemAdapter.notifyDataSetChanged();
                 }
             });
         }
@@ -93,7 +89,7 @@ public class MediaBrowserFragment extends Fragment {
         if (context instanceof InteractionListener) {
             mListener = (InteractionListener) context;
         } else {
-            throw new RuntimeException(context.toString() + " must implement InteractionListener");
+            throw new RuntimeException(context.toString() + " 必须实现接口: InteractionListener");
         }
     }
 
