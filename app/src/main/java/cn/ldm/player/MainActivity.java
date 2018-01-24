@@ -71,8 +71,8 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
 
     @Override
     protected void onStop() {
-        _mediaBrowser.disconnect();
         super.onStop();
+        _mediaBrowser.disconnect();
     }
 
     @Override

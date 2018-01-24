@@ -1,6 +1,8 @@
 package cn.ldm.player.services;
 
 import android.app.Notification;
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.media.MediaDescription;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser.MediaItem;
@@ -18,6 +20,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.ldm.player.MainActivity;
 import cn.ldm.player.core.MusicMetadataDataSource;
 import cn.ldm.player.core.MusicScanner;
 import cn.ldm.player.datasource.MediaItemDataSource;
@@ -25,6 +28,7 @@ import cn.ldm.player.datasource.MediaMetadataDataSource;
 import cn.ldm.player.loader.PlaylistLoader;
 import cn.ldm.player.model.Playlist;
 import cn.ldm.player.model.Song;
+import cn.ldm.player.model.SongInfo;
 import cn.ldm.player.player.MediaPlayerAdapter;
 
 
@@ -39,6 +43,8 @@ public class MyMediaBrowserService extends MediaBrowserService {
     private static final String MEDIA_ID_MUSIC_BY_ARTIST = "__BY_ARTIST__";
     private static final String MEDIA_ID_MUSIC_BY_ALBUM = "__BY_ALBUM__";
     private static final String MEDIA_ID_MUSIC_BY_PLAYLIST = "__BY_PLAYLIST__";
+    public static final char CATEGORY_SEPARATOR = 31;  //单元分隔符 US ␟
+    public static final char LEAF_SEPARATOR = 30;      //记录分隔符 RS ␞
 
     private MediaPlayerAdapter _mediaPlayerAdapter;
 
@@ -136,7 +142,6 @@ public class MyMediaBrowserService extends MediaBrowserService {
     }
     //endregion
 
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -144,49 +149,13 @@ public class MyMediaBrowserService extends MediaBrowserService {
         setSessionToken(_mediaSession.getSessionToken());
         _mediaPlayerAdapter = new MediaPlayerAdapter(_mediaSession);
         _mediaSession.setCallback(new MediaSession.Callback() {
-            private List<MediaSession.QueueItem> mPlaylist = new ArrayList<>();
-            private int mQueueIndex = -1;
-            private MediaMetadata mPreparedMedia;
-
-            @Override
-            public void onSeekTo(long pos) {
-                //                mMediaPlayer.seekTo((int)pos);
-            }
-
-            @Override
-            public void onPrepareFromMediaId(String mediaId, Bundle extras) {
-                super.onPrepareFromMediaId(mediaId, extras);
-                Log.i(TAG, "onPrepareFromMediaId: ");
-            }
-
-            @Override
-            public void onPrepare() {
-                super.onPrepare();
-                Log.i(TAG, "onPrepare: ");
-            }
-
-            @Override
-            public void onPause() {
-                super.onPause();
-            }
-
-            @Override
-            public void onStop() {
-                super.onStop();
-            }
-
-            @Override
-            public void onPlayFromUri(Uri uri, Bundle extras) {
-                super.onPlayFromUri(uri, extras);
-            }
-
             @Override
             public void onPlayFromMediaId(String mediaId, Bundle extras) {
-                MediaMetadata metadata = MediaMetadataDataSource.queryById(getApplicationContext(), mediaId).getMediaMetadata();
-                Log.i(TAG, "onPlayFromMediaId: " + metadata.getDescription().getTitle());
+                SongInfo songInfo = MediaMetadataDataSource.queryById(getApplicationContext(), mediaId);
+                Log.i(TAG, "onPlayFromMediaId: " + songInfo.toString());
                 _mediaSession.setActive(true);
-                _mediaSession.setMetadata(metadata);
-                _mediaPlayerAdapter.play(metadata);
+                _mediaSession.setMetadata(songInfo.getMediaMetadata());
+                _mediaPlayerAdapter.play(songInfo);
                 loadNotification();
             }
         });
@@ -194,25 +163,29 @@ public class MyMediaBrowserService extends MediaBrowserService {
 
     public void loadNotification() {
         Log.i(TAG, "loadNotification: ");
-        MediaController controller = _mediaSession.getController();
-        MediaMetadata metadata = controller.getMetadata();
-        Notification.Builder builder = new Notification.Builder(getApplicationContext());
+        MediaMetadata metadata = _mediaSession.getController().getMetadata();
+        Notification.Builder builder = new Notification.Builder(this);
         String title = metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE);
         String subtitle = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST) + " - "
                 + metadata.getString(MediaMetadata.METADATA_KEY_ALBUM);
-        builder.setContentTitle(title)
+        Notification notification= builder.setContentTitle(title)
                 .setContentText(subtitle)
                 .setSmallIcon(android.R.drawable.ic_media_play)//通知栏顶部的图片
                 .setLargeIcon(MusicScanner.getInstance(this).retrieveAlbumArt(metadata))//展开通知栏所展示的图片
-                .setContentIntent(controller.getSessionActivity())
+                //                .setContentIntent(controller.getSessionActivity())
+//                .setContentIntent(createContentIntent(metadata.getDescription()))
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
-                .setStyle(new Notification.MediaStyle().setMediaSession(_mediaSession.getSessionToken()));
-
-        MyMediaBrowserService.this.startForeground(1, builder.build());
+                .setStyle(new Notification.MediaStyle().setMediaSession(_mediaSession.getSessionToken()))
+                .build();
+        startForeground(1, notification);
     }
 
-    public static final char CATEGORY_SEPARATOR = 31;  //单元分隔符 US ␟
-    public static final char LEAF_SEPARATOR = 30;      //记录分隔符 RS ␞
+    private PendingIntent createContentIntent(MediaDescription description) {
+        Intent openUI = new Intent(this, MainActivity.class);
+        openUI.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        return PendingIntent.getActivity(this, 1, openUI, PendingIntent.FLAG_CANCEL_CURRENT);
+    }
+
     private final IBinder mBinder = new LocalBinder();
 
     public class LocalBinder extends Binder {

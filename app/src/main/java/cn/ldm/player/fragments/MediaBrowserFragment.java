@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,11 +25,11 @@ import cn.ldm.player.services.MyMediaBrowserService;
 public class MediaBrowserFragment extends Fragment {
 
     private static final String TAG = MediaBrowserFragment.class.getSimpleName();
-
     private MediaItem _parentMediaItem;
     private InteractionListener mListener;
     private List<MediaItem> _mediaItems;
     private MediaItemAdapter _mediaItemAdapter;
+    
     private MediaItemAdapter.OnMediaItemClickListener onMediaItemClickListener = new MediaItemAdapter.OnMediaItemClickListener() {
         @Override
         public void onClick(MediaItem mediaItem) {
@@ -82,7 +83,6 @@ public class MediaBrowserFragment extends Fragment {
         return view;
     }
 
-
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -96,6 +96,7 @@ public class MediaBrowserFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
+        Log.i(TAG, "onDetach: ");
         mListener = null;
     }
 

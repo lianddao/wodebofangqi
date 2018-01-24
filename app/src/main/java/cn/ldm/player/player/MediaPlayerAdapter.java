@@ -1,13 +1,12 @@
 package cn.ldm.player.player;
 
 import android.media.AudioManager;
-import android.media.MediaMetadata;
 import android.media.MediaPlayer;
-import android.media.browse.MediaBrowser;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
-import android.net.Uri;
 import android.util.Log;
+
+import cn.ldm.player.model.SongInfo;
 
 import static android.media.session.PlaybackState.STATE_PAUSED;
 import static android.media.session.PlaybackState.STATE_PLAYING;
@@ -61,11 +60,6 @@ public class MediaPlayerAdapter {
         return _currentMediaId.length() > 0 && !_currentMediaId.equals(mediaId);
     }
 
-    private void play() {
-        _mediaPlayer.start();
-        setNewState(PlaybackState.STATE_PLAYING, -1);
-    }
-
     private void setNewState(int playbackState, int position) {
         _mediaSession.setPlaybackState(new PlaybackState.Builder().setState(playbackState, position, 1.0f).build());
         switch (playbackState) {
@@ -78,28 +72,11 @@ public class MediaPlayerAdapter {
         }
     }
 
-    public void play(MediaMetadata metadata) {
-        try {
-            metadata.getDescription().getMediaUri() 为空
-            play(metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID),
-                 Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_ART_URI))   );
-        } catch (Exception ex) {
-        }
-    }
-
-    public void play(MediaBrowser.MediaItem mediaItem) {
-        try {
-            play(mediaItem.getMediaId(), mediaItem.getDescription().getMediaUri());
-        } catch (Exception ex) {
-            Log.e(TAG, "play: " + ex.toString());
-        }
-    }
-
-    public void play(String mediaId, Uri data) throws Exception {
+    public void play(SongInfo songInfo) {
         if (isInitializing()) {
             Log.i(TAG, "play: 初始化");
         } else {
-            if (isChanged(mediaId)) {
+            if (isChanged(songInfo.getId())) {
                 Log.i(TAG, "play: 歌曲不同");
             } else {
                 Log.i(TAG, "play: 歌曲相同");
@@ -113,14 +90,18 @@ public class MediaPlayerAdapter {
                 }
             }
         }
-        _currentMediaId = mediaId;
+        _currentMediaId = songInfo.getId();
         initializeMediaPlayer();
         if (_mediaPlayer.isPlaying()) {
             _mediaPlayer.reset();
         }
-        _mediaPlayer.setDataSource(data.toString());
-        _mediaPlayer.prepare();
-        play();
+        try {
+            _mediaPlayer.setDataSource(songInfo.getUri().toString());
+            _mediaPlayer.prepare();
+        } catch (Exception ex) {
+        }
+        _mediaPlayer.start();
+        setNewState(PlaybackState.STATE_PLAYING, -1);
     }
 
     public static String _filterMediaId(String mediaId) {

@@ -24,7 +24,7 @@ public class SongInfo {
         _duration = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
         String data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
         _uri = Uri.parse(data);
-        MediaMetadata mediaMetadata = new MediaMetadata.Builder()
+        _mediaMetadata = new MediaMetadata.Builder()
                 .putString(MediaMetadata.METADATA_KEY_MEDIA_ID, _id)
                 .putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, _title)
                 .putString(MediaMetadata.METADATA_KEY_ARTIST, _artist)
@@ -32,9 +32,7 @@ public class SongInfo {
                 .putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, _artist + " - " + _album)
                 .putLong(MediaMetadata.METADATA_KEY_DURATION, _duration)
                 .putString(MediaMetadata.METADATA_KEY_ART_URI, data)
-                .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI,data)
                 .build();
-        _mediaMetadata = mediaMetadata;
         _mediaItem = new MediaBrowser.MediaItem(
                 new MediaDescription.Builder()
                         .setMediaId(_id)
