@@ -45,6 +45,7 @@ public class MediaPlayerAdapter {
                 }
             });
         }
+        _mediaPlayer.reset();
     }
 
     private boolean isPlaying() {
@@ -82,26 +83,38 @@ public class MediaPlayerAdapter {
                 Log.i(TAG, "play: 歌曲相同");
                 if (isPlaying()) {
                     _mediaPlayer.pause();
+                    setNewState(PlaybackState.STATE_PAUSED, _mediaPlayer.getCurrentPosition());
                     return;
                 } else {
                     Log.i(TAG, "play: 判断当前的媒体状态,根据状态时暂停或停止等做处理");
                     _mediaPlayer.start();
+                    setNewState(PlaybackState.STATE_PLAYING, _mediaPlayer.getCurrentPosition());
                     return;
                 }
             }
         }
         _currentMediaId = songInfo.getId();
         initializeMediaPlayer();
-        if (_mediaPlayer.isPlaying()) {
-            _mediaPlayer.reset();
-        }
         try {
             _mediaPlayer.setDataSource(songInfo.getUri().toString());
             _mediaPlayer.prepare();
         } catch (Exception ex) {
+            Log.i(TAG, "play: "+ex.toString());
         }
         _mediaPlayer.start();
         setNewState(PlaybackState.STATE_PLAYING, -1);
+    }
+
+    public void pause(){
+        _mediaPlayer.pause();
+    }
+
+    public void play(){
+        _mediaPlayer.start();
+    }
+
+    public int getCurrentPosition(){
+        return _mediaPlayer.getCurrentPosition();
     }
 
     public static String _filterMediaId(String mediaId) {

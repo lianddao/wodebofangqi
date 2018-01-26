@@ -10,11 +10,35 @@ import android.provider.MediaStore;
 
 public class SongInfo {
 
+    private static final String FIELDS_DATA = MediaMetadata.METADATA_KEY_ART_URI;
     private MediaMetadata _mediaMetadata;
     private MediaBrowser.MediaItem _mediaItem;
     private String _id, _title, _subtitle, _album, _artist;
     private Uri _uri;
     private long _duration;
+
+    public static SongInfo make(MediaMetadata metadata) {
+        SongInfo info = new SongInfo();
+        info._id = metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID);
+        info._title = metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE);
+        info._subtitle = metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE);
+        info._album = metadata.getString(MediaMetadata.METADATA_KEY_ALBUM);
+        info._artist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST);
+        info._uri = Uri.parse(metadata.getString(FIELDS_DATA));
+        info._duration = metadata.getLong(MediaMetadata.METADATA_KEY_DURATION);
+        info._mediaMetadata = metadata;
+        info._mediaItem = new MediaBrowser.MediaItem(
+                new MediaDescription.Builder()
+                        .setMediaId(info._id)
+                        .setMediaUri(info._uri)
+                        .setTitle(info._title)
+                        .setSubtitle(info._subtitle)
+                        .build(),
+                MediaBrowser.MediaItem.FLAG_PLAYABLE);
+        return info;
+    }
+
+    private SongInfo() {}
 
     public SongInfo(Cursor cursor) {
         _id = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID));
@@ -31,7 +55,7 @@ public class SongInfo {
                 .putString(MediaMetadata.METADATA_KEY_ALBUM, _album)
                 .putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, _artist + " - " + _album)
                 .putLong(MediaMetadata.METADATA_KEY_DURATION, _duration)
-                .putString(MediaMetadata.METADATA_KEY_ART_URI, data)
+                .putString(FIELDS_DATA, data)
                 .build();
         _mediaItem = new MediaBrowser.MediaItem(
                 new MediaDescription.Builder()

@@ -8,6 +8,7 @@ import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
+import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
@@ -158,6 +159,26 @@ public class MyMediaBrowserService extends MediaBrowserService {
                 _mediaPlayerAdapter.play(songInfo);
                 loadNotification();
             }
+
+            @Override
+            public void onPause() {
+                _mediaPlayerAdapter.pause();
+                PlaybackState playbackState = new PlaybackState.Builder()
+                        .setState(PlaybackState.STATE_PAUSED, _mediaPlayerAdapter.getCurrentPosition(), 1.0f)
+                        .build();
+                _mediaSession.setPlaybackState(playbackState);
+                loadNotification();
+            }
+
+            @Override
+            public void onPlay() {
+                _mediaPlayerAdapter.play();
+                PlaybackState playbackState = new PlaybackState.Builder()
+                        .setState(PlaybackState.STATE_PLAYING, _mediaPlayerAdapter.getCurrentPosition(), 1.0f)
+                        .build();
+                _mediaSession.setPlaybackState(playbackState);
+                loadNotification();
+            }
         });
     }
 
@@ -166,14 +187,14 @@ public class MyMediaBrowserService extends MediaBrowserService {
         MediaMetadata metadata = _mediaSession.getController().getMetadata();
         Notification.Builder builder = new Notification.Builder(this);
         String title = metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE);
-        String subtitle = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST) + " - "
-                + metadata.getString(MediaMetadata.METADATA_KEY_ALBUM);
-        Notification notification= builder.setContentTitle(title)
+        String subtitle = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST)
+                + " - " + metadata.getString(MediaMetadata.METADATA_KEY_ALBUM);
+        Notification notification = builder
+                .setContentTitle(title)
                 .setContentText(subtitle)
                 .setSmallIcon(android.R.drawable.ic_media_play)//通知栏顶部的图片
                 .setLargeIcon(MusicScanner.getInstance(this).retrieveAlbumArt(metadata))//展开通知栏所展示的图片
-                //                .setContentIntent(controller.getSessionActivity())
-//                .setContentIntent(createContentIntent(metadata.getDescription()))
+                .setContentIntent(createContentIntent(metadata.getDescription()))
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setStyle(new Notification.MediaStyle().setMediaSession(_mediaSession.getSessionToken()))
                 .build();
