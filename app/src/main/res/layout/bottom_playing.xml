@@ -20,12 +20,22 @@
         android:orientation="vertical"
         app:layout_constraintGuide_percent="0.75"/>
 
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline2"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.5"
+        />
+
     <ImageView
         android:id="@+id/imgAlbum"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:adjustViewBounds="true"
         android:background="@color/colorPrimary"
+        android:minHeight="150dp"
+        android:minWidth="150dp"
         android:scaleType="fitXY"
         android:src="@android:drawable/ic_menu_report_image"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -38,30 +48,32 @@
         android:id="@+id/txtTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
+        android:layout_marginLeft="15dp"
+        android:padding="0dp"
         android:text="歌曲名称"
         android:textAllCaps="false"
         android:textSize="14sp"
-        android:textStyle="bold"
-        app:layout_constraintLeft_toRightOf="@id/imgAlbum"
-        app:layout_constraintTop_toTopOf="@id/imgAlbum"/>
+        android:textStyle="bold" android:layout_marginBottom="2dp"
+        app:layout_constraintBottom_toBottomOf="@id/guideline2"
+        app:layout_constraintLeft_toRightOf="@id/guideline"
+       />
 
     <TextView
         android:id="@+id/txtSubtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="2dp"
+        android:padding="0dp"
         android:text="歌手 - 专辑"
         android:textSize="10sp"
         app:layout_constraintLeft_toLeftOf="@id/txtTitle"
-        app:layout_constraintTop_toBottomOf="@id/txtTitle"/>
+        app:layout_constraintTop_toBottomOf="@id/guideline2"/>
 
 
     <ImageView
         android:id="@+id/imgPlayPause"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="?attr/selectableItemBackground"
         android:src="@android:drawable/ic_media_play"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toRightOf="@id/guideline1"
@@ -74,7 +86,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="10dp"
-        android:background="?attr/"
         android:src="@android:drawable/ic_media_next"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toRightOf="@id/imgPlayPause"

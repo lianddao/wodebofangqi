@@ -63,7 +63,7 @@ public class MediaBrowserFragment extends Fragment {
         if (view instanceof RecyclerView) {
             Context context = view.getContext();
             RecyclerView recyclerView = (RecyclerView) view;
-            recyclerView.setLayoutManager(new LinearLayoutManager(context));
+//            recyclerView.setLayoutManager(new LinearLayoutManager(context)); 或在在布局文件中使用 app:layoutManager="LinearLayoutManager"
             recyclerView.setAdapter(_mediaItemAdapter);
             recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL));
 

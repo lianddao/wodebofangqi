@@ -1,14 +1,18 @@
 package cn.ldm.player;
 
+import android.Manifest;
 import android.app.FragmentTransaction;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
 import android.media.session.MediaController;
+import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.os.Bundle;
+import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -17,19 +21,26 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import cn.ldm.player.activities.PermissionActivity;
+import cn.ldm.player.activities.PlayingActivity;
 import cn.ldm.player.core.MediaItemFactory;
 import cn.ldm.player.core.MusicScanner;
 import cn.ldm.player.fragments.MediaBrowserFragment;
+import cn.ldm.player.fragments.PlayingFragment;
 import cn.ldm.player.model.SongInfo;
 import cn.ldm.player.services.MyMediaBrowserService;
 
-public class MainActivity extends PermissionActivity implements MediaBrowserFragment.InteractionListener {
+public class MainActivity extends PermissionActivity implements MediaBrowserFragment.InteractionListener, PlayingFragment.InteractionListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private String FRAGMENT_TAG = "fragment-tag";
     private MediaBrowser _mediaBrowser;
     private ImageView imgAlbum, imgPlayPause, imgNext;
     private TextView txtTitle, txtSubtitle;
+
+    private SongInfo _currentSong;
+
+    @IdRes
+    private int FRAGMENT_CONTAINER = R.id.container;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +51,18 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
         imgNext = (ImageView) findViewById(R.id.imgNext);
         txtTitle = (TextView) findViewById(R.id.txtTitle);
         txtSubtitle = (TextView) findViewById(R.id.txtSubtitle);
+        if (isPermissionPassed) initAppAfterRequestPermission();
+    }
+
+    public void initAppAfterRequestPermission() {
+
+        MediaBrowserFragment fragment = (MediaBrowserFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
+        if (fragment == null) {
+            Log.i(TAG, "initAppAfterRequestPermission: 加入片段");
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            transaction.replace(FRAGMENT_CONTAINER, MediaBrowserFragment.newInstance(MediaItemFactory.ROOT), FRAGMENT_TAG);
+            transaction.commit();
+        }
 
         imgPlayPause.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -58,12 +81,19 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
             }
         });
 
-        MediaBrowserFragment fragment = (MediaBrowserFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
-        if (fragment == null) {
-            FragmentTransaction transaction = getFragmentManager().beginTransaction();
-            transaction.replace(R.id.container, MediaBrowserFragment.newInstance(MediaItemFactory.ROOT), FRAGMENT_TAG);
-            transaction.commit();
-        }
+        imgAlbum.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MediaController mediaController = getMediaController();
+                MediaMetadata metadata = mediaController.getMetadata();
+                _currentSong = SongInfo.make(metadata);
+                Log.i(TAG, "onClick: " + _currentSong.toString());
+                Intent intent=new Intent(MainActivity.this,PlayingActivity.class);
+                intent.putExtra("token",_mediaBrowser.getSessionToken());
+                startActivity(intent);
+            }
+        });
+
         _mediaBrowser = new MediaBrowser(this, new ComponentName(this, MyMediaBrowserService.class),
                 new MediaBrowser.ConnectionCallback() {
                     @Override
@@ -85,6 +115,7 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
                             }
                         });
                         setMediaController(mediaController);
+                        //                        MainActivity.this.setMediaController(mediaController);
                     }
                 },
                 null
@@ -116,13 +147,11 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
     }
 
     @Override
-    public void initAppAfterRequestPermission() {
-
-    }
-
-    @Override
     protected void onStart() {
         super.onStart();
+        if (_mediaBrowser == null) {
+            return;
+        }
         if (_mediaBrowser.isConnected()) {
             Log.i(TAG, "onStart: 已连接");
         } else {
@@ -133,9 +162,10 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
     @Override
     protected void onStop() {
         super.onStop();
-        //        _mediaBrowser.disconnect();
-        Log.w(TAG, "onStop: 应始终保持媒体浏览器的连接,否则按 HONE 键将会使服务被销毁,从而也会从通知栏消失");
-
+        if (_mediaBrowser != null) {
+            //            _mediaBrowser.disconnect();
+            Log.w(TAG, "onStop: 应始终保持媒体浏览器的连接,否则按 HONE 键将会使服务被销毁,从而也会从通知栏消失");
+        }
     }
 
     @Override
@@ -143,5 +173,8 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
         return _mediaBrowser;
     }
 
-
+    @Override
+    public MediaSession.Token getMediaSessionToken() {
+        return _mediaBrowser.getSessionToken();
+    }
 }

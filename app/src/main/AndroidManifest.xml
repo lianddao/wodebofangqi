@@ -37,7 +37,8 @@
         </service>
 
         <activity android:name=".services.ServiceTestActivity">
-
+        </activity>
+        <activity android:name=".activities.PlayingActivity" android:launchMode="singleTop">
         </activity>
     </application>
 
