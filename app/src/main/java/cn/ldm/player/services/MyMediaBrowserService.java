@@ -6,10 +6,8 @@ import android.content.Intent;
 import android.media.MediaDescription;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser.MediaItem;
-import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
-import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -46,6 +44,9 @@ public class MyMediaBrowserService extends MediaBrowserService {
     private static final String MEDIA_ID_MUSIC_BY_PLAYLIST = "__BY_PLAYLIST__";
     public static final char CATEGORY_SEPARATOR = 31;  //单元分隔符 US ␟
     public static final char LEAF_SEPARATOR = 30;      //记录分隔符 RS ␞
+
+    private static final float PLAYBACK_SPEED = 1.0f;
+    private static final PlaybackState.Builder _playbackStateBuilder = new PlaybackState.Builder();
 
     private MediaPlayerAdapter _mediaPlayerAdapter;
 
@@ -143,6 +144,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
     }
     //endregion
 
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -156,6 +158,9 @@ public class MyMediaBrowserService extends MediaBrowserService {
                 Log.i(TAG, "onPlayFromMediaId: " + songInfo.toString());
                 _mediaSession.setActive(true);
                 _mediaSession.setMetadata(songInfo.getMediaMetadata());
+                _mediaSession.setPlaybackState(
+                        _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, -1, PLAYBACK_SPEED).build()
+                );
                 _mediaPlayerAdapter.play(songInfo);
                 loadNotification();
             }
@@ -163,22 +168,54 @@ public class MyMediaBrowserService extends MediaBrowserService {
             @Override
             public void onPause() {
                 _mediaPlayerAdapter.pause();
-                PlaybackState playbackState = new PlaybackState.Builder()
-                        .setState(PlaybackState.STATE_PAUSED, _mediaPlayerAdapter.getCurrentPosition(), 1.0f)
-                        .build();
-                _mediaSession.setPlaybackState(playbackState);
+                _mediaSession.setPlaybackState(_playbackStateBuilder
+                        .setState(PlaybackState.STATE_PAUSED, _mediaSession.getController().getPlaybackState().getPosition(), 1.0f)
+                        .build()
+                );
                 loadNotification();
             }
 
             @Override
             public void onPlay() {
+                _mediaSession.setPlaybackState(_playbackStateBuilder
+                        .setState(PlaybackState.STATE_PLAYING, _mediaSession.getController().getPlaybackState().getPosition(), 1.0f)
+                        .build()
+                );
                 _mediaPlayerAdapter.play();
-                PlaybackState playbackState = new PlaybackState.Builder()
-                        .setState(PlaybackState.STATE_PLAYING, _mediaPlayerAdapter.getCurrentPosition(), 1.0f)
-                        .build();
-                _mediaSession.setPlaybackState(playbackState);
                 loadNotification();
             }
+
+            @Override
+            public void onSkipToNext() {
+                Log.i(TAG, "onSkipToNext: ");
+                String thisId = _mediaSession.getController().getMetadata().getString(MediaMetadata.METADATA_KEY_MEDIA_ID);
+                String thatId = null;
+                for (MediaItem item : mediaItems) {
+                    if (item.getMediaId().equals(thisId)) {
+                        thatId = item.getMediaId();
+                        break;
+                    }
+                }
+                SongInfo songInfo = MediaMetadataDataSource.queryById(getApplicationContext(), thatId);
+                _mediaSession.setMetadata(songInfo.getMediaMetadata());
+                _mediaPlayerAdapter.play(songInfo);
+                loadNotification();
+            }
+
+            @Override
+            public void onSkipToPrevious() {
+                super.onSkipToPrevious();
+            }
+
+            @Override
+            public void onSeekTo(long pos) {
+                _mediaPlayerAdapter.seekTo((int) pos);
+                _mediaSession.setPlaybackState(_playbackStateBuilder
+                        .setState(PlaybackState.STATE_PLAYING, _mediaPlayerAdapter.getCurrentPosition(), 1.0f)
+                        .build()
+                );
+            }
+
         });
     }
 

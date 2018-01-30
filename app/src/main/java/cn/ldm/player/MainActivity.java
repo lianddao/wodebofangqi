@@ -1,6 +1,5 @@
 package cn.ldm.player;
 
-import android.Manifest;
 import android.app.FragmentTransaction;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -24,19 +23,18 @@ import cn.ldm.player.activities.PermissionActivity;
 import cn.ldm.player.activities.PlayingActivity;
 import cn.ldm.player.core.MediaItemFactory;
 import cn.ldm.player.core.MusicScanner;
-import cn.ldm.player.fragments.MediaBrowserFragment;
+import cn.ldm.player.fragments.MusicListFragment;
 import cn.ldm.player.fragments.PlayingFragment;
 import cn.ldm.player.model.SongInfo;
 import cn.ldm.player.services.MyMediaBrowserService;
 
-public class MainActivity extends PermissionActivity implements MediaBrowserFragment.InteractionListener, PlayingFragment.InteractionListener {
+public class MainActivity extends PermissionActivity implements MusicListFragment.InteractionListener{
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private String FRAGMENT_TAG = "fragment-tag";
     private MediaBrowser _mediaBrowser;
     private ImageView imgAlbum, imgPlayPause, imgNext;
     private TextView txtTitle, txtSubtitle;
-
     private SongInfo _currentSong;
 
     @IdRes
@@ -51,19 +49,23 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
         imgNext = (ImageView) findViewById(R.id.imgNext);
         txtTitle = (TextView) findViewById(R.id.txtTitle);
         txtSubtitle = (TextView) findViewById(R.id.txtSubtitle);
-        if (isPermissionPassed) initAppAfterRequestPermission();
+        if (isPermissionPassed) {
+            Log.i(TAG, "onCreate: 权限已全部取得");
+            initAppAfterRequestPermission();
+        }
     }
 
     public void initAppAfterRequestPermission() {
-
-        MediaBrowserFragment fragment = (MediaBrowserFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
+        //region 装入主片段
+        MusicListFragment fragment = (MusicListFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
         if (fragment == null) {
             Log.i(TAG, "initAppAfterRequestPermission: 加入片段");
             FragmentTransaction transaction = getFragmentManager().beginTransaction();
-            transaction.replace(FRAGMENT_CONTAINER, MediaBrowserFragment.newInstance(MediaItemFactory.ROOT), FRAGMENT_TAG);
+            transaction.replace(FRAGMENT_CONTAINER, MusicListFragment.newInstance(MediaItemFactory.ROOT), FRAGMENT_TAG);
             transaction.commit();
         }
-
+        //endregion
+        //region 单击事件
         imgPlayPause.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -74,10 +76,13 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
                     case PlaybackState.STATE_PLAYING:
                         getMediaController().getTransportControls().pause();
                         break;
+                    case PlaybackState.STATE_STOPPED:
+                        getMediaController().getTransportControls().playFromMediaId(_currentSong.getId(), null);
+                        break;
                     default:
                         break;
                 }
-                updateState(getMediaController().getPlaybackState());
+                updateUiState();
             }
         });
 
@@ -88,12 +93,13 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
                 MediaMetadata metadata = mediaController.getMetadata();
                 _currentSong = SongInfo.make(metadata);
                 Log.i(TAG, "onClick: " + _currentSong.toString());
-                Intent intent=new Intent(MainActivity.this,PlayingActivity.class);
-                intent.putExtra("token",_mediaBrowser.getSessionToken());
+                Intent intent = new Intent(MainActivity.this, PlayingActivity.class);
+                intent.putExtra("token", _mediaBrowser.getSessionToken());
                 startActivity(intent);
             }
         });
-
+        //endregion
+        //region 连接到媒体浏览服务
         _mediaBrowser = new MediaBrowser(this, new ComponentName(this, MyMediaBrowserService.class),
                 new MediaBrowser.ConnectionCallback() {
                     @Override
@@ -111,7 +117,7 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
                             public void onPlaybackStateChanged(@NonNull PlaybackState state) {
                                 super.onPlaybackStateChanged(state);
                                 Log.i(TAG, "onPlaybackStateChanged: ");
-                                updateState(state);
+                                updateUiState();
                             }
                         });
                         setMediaController(mediaController);
@@ -120,6 +126,7 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
                 },
                 null
         );
+        //endregion
     }
 
     private void updateMetadata(final MediaMetadata metadata) {
@@ -131,10 +138,12 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
         txtSubtitle.setText(songInfo.getSubtitle());
     }
 
-    private void updateState(PlaybackState state) {
-        Log.i(TAG, "updateState: " + state.toString());
+    private void updateUiState() {
+        PlaybackState state = getMediaController().getPlaybackState();
+        Log.i(TAG, "updateUiState: " + state.toString());
         switch (state.getState()) {
             case PlaybackState.STATE_PAUSED:
+            case PlaybackState.STATE_STOPPED:
                 imgPlayPause.setImageResource(android.R.drawable.ic_media_play);
                 break;
             case PlaybackState.STATE_PLAYING:
@@ -173,8 +182,4 @@ public class MainActivity extends PermissionActivity implements MediaBrowserFrag
         return _mediaBrowser;
     }
 
-    @Override
-    public MediaSession.Token getMediaSessionToken() {
-        return _mediaBrowser.getSessionToken();
-    }
 }

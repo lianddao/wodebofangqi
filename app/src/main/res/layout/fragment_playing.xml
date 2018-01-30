@@ -65,14 +65,13 @@
         app:layout_constraintBottom_toTopOf="@id/seekBar"
         app:layout_constraintRight_toRightOf="@id/seekBar"/>
 
-    <SeekBar
+    <cn.ldm.player.ui.MediaSeekBar
         android:id="@+id/seekBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/guideline"
-        />
+        app:layout_constraintTop_toBottomOf="@id/guideline"/>
 
     <ImageView
         android:id="@+id/imgPlayPause"

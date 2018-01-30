@@ -1,32 +1,38 @@
 package cn.ldm.player.fragments;
 
 import android.app.Fragment;
-import android.content.Context;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
-import android.media.session.MediaSession;
+import android.media.session.PlaybackState;
 import android.os.Bundle;
+import android.support.annotation.DrawableRes;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.SeekBar;
 import android.widget.TextView;
 
 import cn.ldm.player.R;
 import cn.ldm.player.core.MusicScanner;
 import cn.ldm.player.model.SongInfo;
+import cn.ldm.player.ui.MediaSeekBar;
 
 
 public class PlayingFragment extends Fragment {
 
     private static final String TAG = PlayingFragment.class.getSimpleName();
-    private InteractionListener mListener;
     private ImageView imgAlbum, imgPlayPause, imgPrev, imgNext;
-    private SeekBar seekBar;
+    private MediaSeekBar seekBar;
     private TextView txtTitle, txtSubtitle, txtPlayTime, txtTotalTime;
     private SongInfo _currentSong;
+
+    @DrawableRes
+    private int RES_PLAYING = android.R.drawable.ic_media_play, RES_PAUSE = android.R.drawable.ic_media_pause;
+
+    private MediaController _mediaController;
 
     public PlayingFragment() {
     }
@@ -43,43 +49,81 @@ public class PlayingFragment extends Fragment {
         imgPlayPause = (ImageView) view.findViewById(R.id.imgPlayPause);
         imgPrev = (ImageView) view.findViewById(R.id.imgPrev);
         imgNext = (ImageView) view.findViewById(R.id.imgNext);
-        seekBar = (SeekBar) view.findViewById(R.id.seekBar);
+        seekBar = (MediaSeekBar) view.findViewById(R.id.seekBar);
         txtTitle = (TextView) view.findViewById(R.id.txtTitle);
         txtSubtitle = (TextView) view.findViewById(R.id.txtSubtitle);
         txtPlayTime = (TextView) view.findViewById(R.id.txtPlayTime);
         txtTotalTime = (TextView) view.findViewById(R.id.txtTotalTime);
 
+        _mediaController = getActivity().getMediaController();
+        _mediaController.registerCallback(new MediaController.Callback() {
+            @Override
+            public void onPlaybackStateChanged(@NonNull PlaybackState state) {
+                Log.i(TAG, "onPlaybackStateChanged: ");
+                switch (state.getState()) {
+                    case PlaybackState.STATE_STOPPED:
+                        Log.i(TAG, "onPlaybackStateChanged: 播放已经停止");
+                        imgPlayPause.setImageResource(android.R.drawable.ic_media_play);
+                        break;
+                    case PlaybackState.STATE_PLAYING:
+                        imgPlayPause.setImageResource(android.R.drawable.ic_media_pause);
+                        break;
+                    default:
+                        break;
+                }
+            }
 
-        MediaSession.Token token = (MediaSession.Token)getActivity().getIntent().getParcelableExtra("token");
-        MediaController mediaController = new MediaController(getActivity(),token);
-        MediaMetadata metadata = mediaController.getMetadata();
+            @Override
+            public void onMetadataChanged(@Nullable MediaMetadata metadata) {
+                super.onMetadataChanged(metadata);
+            }
+        });
+
+        //region 设置UI
+        MediaMetadata metadata = _mediaController.getMetadata();
         _currentSong = SongInfo.make(metadata);
         imgAlbum.setImageBitmap(MusicScanner.getInstance(getActivity()).retrieveAlbumArt(_currentSong.getMediaMetadata()));
         txtTitle.setText(_currentSong.getTitle());
         txtSubtitle.setText(_currentSong.getSubtitle());
 
+        seekBar.setMax((int) metadata.getLong(MediaMetadata.METADATA_KEY_DURATION));
+        seekBar.setProgress((int) _mediaController.getPlaybackState().getPosition());
+        //        seekBar.setMediaController(_mediaController);
+        seekBar.startAnimator(getActivity());
+
+        imgPlayPause.setImageResource(RES_PAUSE);
+        txtPlayTime.setText("0");
+        txtTotalTime.setText(seekBar.getMax() + "");
+        //endregion
+
+        //region 单击事件
+        imgPlayPause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (_mediaController.getPlaybackState().getState()) {
+                    case PlaybackState.STATE_PLAYING:
+                        _mediaController.getTransportControls().pause();
+//                        imgPlayPause.setImageResource(android.R.drawable.ic_media_pause);
+                        break;
+                    case PlaybackState.STATE_PAUSED:
+                    case PlaybackState.STATE_STOPPED:
+                        _mediaController.getTransportControls().play();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+
+        imgNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                _mediaController.getTransportControls().skipToNext();
+            }
+        });
+        //endregion
+
         return view;
     }
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (context instanceof InteractionListener) {
-            mListener = (InteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString() + " 必须实现接口: InteractionListener");
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        Log.i(TAG, "onDetach: ");
-        mListener = null;
-    }
-
-    //谁需要外来数据,谁就声明接口
-    public interface InteractionListener {
-        MediaSession.Token getMediaSessionToken();
-    }
 }

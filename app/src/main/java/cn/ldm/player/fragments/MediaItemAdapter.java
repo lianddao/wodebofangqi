@@ -19,6 +19,7 @@ import cn.ldm.player.menu.CreateNewPlaylist;
 
 
 public class MediaItemAdapter extends RecyclerView.Adapter<MediaItemAdapter.ViewHolder> {
+
     private static final String TAG = MediaItemAdapter.class.getSimpleName();
     private final List<MediaItem> mValues;
     private final OnMediaItemClickListener mListener;
@@ -26,11 +27,6 @@ public class MediaItemAdapter extends RecyclerView.Adapter<MediaItemAdapter.View
     public MediaItemAdapter(List<MediaItem> items, OnMediaItemClickListener listener) {
         mValues = items;
         mListener = listener;
-    }
-
-    public MediaItemAdapter(List<MediaItem> items) {
-        mValues = items;
-        mListener = null;
     }
 
     @Override
@@ -49,7 +45,7 @@ public class MediaItemAdapter extends RecyclerView.Adapter<MediaItemAdapter.View
             @Override
             public void onClick(View v) {
                 if (null != mListener) {
-                    mListener.onClick(holder.mMediaItem);
+                    mListener.onClick(holder.mMediaItem);//单击播放
                 }
             }
         });
@@ -71,7 +67,6 @@ public class MediaItemAdapter extends RecyclerView.Adapter<MediaItemAdapter.View
             });
             //endregion
         }
-
     }
 
 
@@ -98,6 +93,7 @@ public class MediaItemAdapter extends RecyclerView.Adapter<MediaItemAdapter.View
         }
     }
 
+    // 声明项单击事件接口,详情交由外者去实现
     public interface OnMediaItemClickListener {
         void onClick(MediaItem mediaItem);
     }

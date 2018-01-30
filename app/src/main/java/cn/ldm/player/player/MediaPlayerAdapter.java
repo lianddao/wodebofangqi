@@ -23,6 +23,9 @@ public class MediaPlayerAdapter {
     private MediaPlayer _mediaPlayer;
     private String _currentMediaId = "";
 
+    private static final float PLAYBACK_SPEED = 1.0f;
+    private PlaybackState.Builder _builder = new PlaybackState.Builder();
+
     public MediaPlayerAdapter(MediaSession mediaSession) {
         _mediaSession = mediaSession;
         Log.i(TAG, "MediaPlayerAdapter: 初始的媒体id为" + _currentMediaId);
@@ -32,10 +35,15 @@ public class MediaPlayerAdapter {
         if (_mediaPlayer == null) {
             _mediaPlayer = new MediaPlayer();
             _mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
             _mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
                     Log.i(TAG, "onCompletion: 播放结束");
+                    _mediaSession.setPlaybackState(_builder.setState(
+                            PlaybackState.STATE_STOPPED,
+                            -1,
+                            PLAYBACK_SPEED).build());
                 }
             });
             _mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -99,21 +107,25 @@ public class MediaPlayerAdapter {
             _mediaPlayer.setDataSource(songInfo.getUri().toString());
             _mediaPlayer.prepare();
         } catch (Exception ex) {
-            Log.i(TAG, "play: "+ex.toString());
+            Log.i(TAG, "play: " + ex.toString());
         }
         _mediaPlayer.start();
         setNewState(PlaybackState.STATE_PLAYING, -1);
     }
 
-    public void pause(){
+    public void pause() {
         _mediaPlayer.pause();
     }
 
-    public void play(){
+    public void play() {
         _mediaPlayer.start();
     }
 
-    public int getCurrentPosition(){
+    public void seekTo(int progress) {
+        _mediaPlayer.seekTo(progress);
+    }
+
+    public int getCurrentPosition() {
         return _mediaPlayer.getCurrentPosition();
     }
 

@@ -8,7 +8,6 @@ import android.media.browse.MediaBrowser.MediaItem;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -22,9 +21,9 @@ import cn.ldm.player.R;
 import cn.ldm.player.services.MyMediaBrowserService;
 
 
-public class MediaBrowserFragment extends Fragment {
+public class MusicListFragment extends Fragment {
 
-    private static final String TAG = MediaBrowserFragment.class.getSimpleName();
+    private static final String TAG = MusicListFragment.class.getSimpleName();
     private MediaItem _parentMediaItem;
     private InteractionListener mListener;
     private List<MediaItem> _mediaItems;
@@ -35,7 +34,7 @@ public class MediaBrowserFragment extends Fragment {
         public void onClick(MediaItem mediaItem) {
             if (mediaItem.isBrowsable()) {
                 FragmentTransaction transaction = getFragmentManager().beginTransaction();
-                transaction.replace(R.id.container, MediaBrowserFragment.newInstance(mediaItem));
+                transaction.replace(R.id.container, MusicListFragment.newInstance(mediaItem));
                 transaction.addToBackStack(null);
                 transaction.commit();
             } else {
@@ -45,13 +44,13 @@ public class MediaBrowserFragment extends Fragment {
         }
     };
 
-    public MediaBrowserFragment() {
+    public MusicListFragment() {
         _mediaItems = new ArrayList<>();
         _mediaItemAdapter = new MediaItemAdapter(_mediaItems, onMediaItemClickListener);
     }
 
-    public static MediaBrowserFragment newInstance(MediaItem parentMediaItem) {
-        MediaBrowserFragment fragment = new MediaBrowserFragment();
+    public static MusicListFragment newInstance(MediaItem parentMediaItem) {
+        MusicListFragment fragment = new MusicListFragment();
         fragment._parentMediaItem = parentMediaItem;
         return fragment;
     }
@@ -61,7 +60,6 @@ public class MediaBrowserFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_media_browser, container, false);
 
         if (view instanceof RecyclerView) {
-            Context context = view.getContext();
             RecyclerView recyclerView = (RecyclerView) view;
 //            recyclerView.setLayoutManager(new LinearLayoutManager(context)); 或在在布局文件中使用 app:layoutManager="LinearLayoutManager"
             recyclerView.setAdapter(_mediaItemAdapter);
