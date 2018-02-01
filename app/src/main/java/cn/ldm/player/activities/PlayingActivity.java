@@ -9,6 +9,7 @@ import android.os.Bundle;
 import cn.ldm.player.R;
 import cn.ldm.player.fragments.PlayingFragment;
 import cn.ldm.player.model.SongInfo;
+import cn.ldm.player.ui.MediaSeekBar;
 
 public class PlayingActivity extends Activity {
 

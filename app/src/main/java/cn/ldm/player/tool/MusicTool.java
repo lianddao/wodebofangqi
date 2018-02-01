@@ -32,6 +32,12 @@ public class MusicTool {
         return String.format("%02d:%02d", minutes, seconds);
     }
 
+    public static String getDisplayTime(int time) {
+        int seconds = time % 60000 / 1000;
+        int minutes = time / 60000;
+        return String.format("%02d:%02d", minutes, seconds);
+    }
+
     public static int getSecond(long duration) {
         return (int) (duration % 60000) / 1000;
     }

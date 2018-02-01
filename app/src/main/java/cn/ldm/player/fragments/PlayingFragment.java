@@ -18,10 +18,11 @@ import android.widget.TextView;
 import cn.ldm.player.R;
 import cn.ldm.player.core.MusicScanner;
 import cn.ldm.player.model.SongInfo;
+import cn.ldm.player.tool.MusicTool;
 import cn.ldm.player.ui.MediaSeekBar;
 
 
-public class PlayingFragment extends Fragment {
+public class PlayingFragment extends Fragment implements MediaSeekBar.TimeChangeListener {
 
     private static final String TAG = PlayingFragment.class.getSimpleName();
     private ImageView imgAlbum, imgPlayPause, imgPrev, imgNext;
@@ -59,13 +60,18 @@ public class PlayingFragment extends Fragment {
         _mediaController.registerCallback(new MediaController.Callback() {
             @Override
             public void onPlaybackStateChanged(@NonNull PlaybackState state) {
-                Log.i(TAG, "onPlaybackStateChanged: ");
                 switch (state.getState()) {
+                    case PlaybackState.STATE_PAUSED:
+                        Log.i(TAG, "onPlaybackStateChanged: 播放已经暂停");
+                        imgPlayPause.setImageResource(android.R.drawable.ic_media_play);
+                        break;
                     case PlaybackState.STATE_STOPPED:
                         Log.i(TAG, "onPlaybackStateChanged: 播放已经停止");
                         imgPlayPause.setImageResource(android.R.drawable.ic_media_play);
+                        txtPlayTime.setText(MusicTool.getDisplayTime(0));
                         break;
                     case PlaybackState.STATE_PLAYING:
+                        Log.i(TAG, "onPlaybackStateChanged: 正在播放");
                         imgPlayPause.setImageResource(android.R.drawable.ic_media_pause);
                         break;
                     default:
@@ -89,7 +95,7 @@ public class PlayingFragment extends Fragment {
         seekBar.setMax((int) metadata.getLong(MediaMetadata.METADATA_KEY_DURATION));
         seekBar.setProgress((int) _mediaController.getPlaybackState().getPosition());
         //        seekBar.setMediaController(_mediaController);
-        seekBar.startAnimator(getActivity());
+        seekBar.startAnimator(getActivity(), this);
 
         imgPlayPause.setImageResource(RES_PAUSE);
         txtPlayTime.setText("0");
@@ -103,7 +109,7 @@ public class PlayingFragment extends Fragment {
                 switch (_mediaController.getPlaybackState().getState()) {
                     case PlaybackState.STATE_PLAYING:
                         _mediaController.getTransportControls().pause();
-//                        imgPlayPause.setImageResource(android.R.drawable.ic_media_pause);
+                        //                        imgPlayPause.setImageResource(android.R.drawable.ic_media_pause);
                         break;
                     case PlaybackState.STATE_PAUSED:
                     case PlaybackState.STATE_STOPPED:
@@ -126,4 +132,9 @@ public class PlayingFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onProgressChanged(MediaSeekBar seekBar) {
+        txtPlayTime.setText(MusicTool.getDisplayTime(seekBar.getProgress()));
+        txtTotalTime.setText(MusicTool.getDisplayTime(seekBar.getMax()));
+    }
 }

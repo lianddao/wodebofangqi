@@ -98,6 +98,13 @@ public class MainActivity extends PermissionActivity implements MusicListFragmen
                 startActivity(intent);
             }
         });
+
+        imgNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getMediaController().getTransportControls().skipToNext();
+            }
+        });
         //endregion
         //region 连接到媒体浏览服务
         _mediaBrowser = new MediaBrowser(this, new ComponentName(this, MyMediaBrowserService.class),
