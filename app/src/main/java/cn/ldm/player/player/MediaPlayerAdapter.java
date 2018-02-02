@@ -6,6 +6,8 @@ import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.util.Log;
 
+import java.util.List;
+
 import cn.ldm.player.model.SongInfo;
 
 import static android.media.session.PlaybackState.STATE_PAUSED;
@@ -40,10 +42,10 @@ public class MediaPlayerAdapter {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
                     Log.i(TAG, "onCompletion: 播放结束");
-                    _mediaSession.setPlaybackState(_builder.setState(
-                            PlaybackState.STATE_STOPPED,
-                            -1,
-                            PLAYBACK_SPEED).build());
+                    _mediaSession.getController().getTransportControls().rewind();
+                    skipToNext();
+                    //                    _mediaSession.setPlaybackState(_builder.setState(PlaybackState.STATE_STOPPED, -1, PLAYBACK_SPEED).build());
+
                 }
             });
             _mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -113,6 +115,18 @@ public class MediaPlayerAdapter {
         setNewState(PlaybackState.STATE_PLAYING, -1);
     }
 
+    public void play(MediaSession.QueueItem queueItem) {
+        initializeMediaPlayer();
+        try {
+            _mediaPlayer.setDataSource(queueItem.getDescription().getMediaUri().toString());
+            _mediaPlayer.prepare();
+        } catch (Exception ex) {
+        }
+        _mediaPlayer.start();
+        //        setNewState(PlaybackState.STATE_PLAYING, -1);
+    }
+
+
     public void pause() {
         _mediaPlayer.pause();
     }
@@ -123,6 +137,22 @@ public class MediaPlayerAdapter {
 
     public void seekTo(int progress) {
         _mediaPlayer.seekTo(progress);
+    }
+
+    public void skipToNext() {
+        int nextIndex = -1;
+        List<MediaSession.QueueItem> queueItems = _mediaSession.getController().getQueue();
+        String id = _mediaSession.getController().getMetadata().getDescription().getMediaId();
+        for (MediaSession.QueueItem item : queueItems) {
+            if (item.getQueueId() == Long.valueOf(_currentMediaId)) {
+                nextIndex = queueItems.indexOf(item) + 1;
+                break;
+            }
+        }
+        if (nextIndex > queueItems.size() - 1) {
+            nextIndex = 0;
+        }
+        play(queueItems.get(nextIndex));
     }
 
     public int getCurrentPosition() {

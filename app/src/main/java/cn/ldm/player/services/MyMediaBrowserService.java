@@ -29,12 +29,13 @@ import cn.ldm.player.model.Playlist;
 import cn.ldm.player.model.Song;
 import cn.ldm.player.model.SongInfo;
 import cn.ldm.player.player.MediaPlayerAdapter;
+import cn.ldm.player.tool.MusicTool;
 
 
 /**
  * 我的媒体浏览服务
  */
-public class MyMediaBrowserService extends MediaBrowserService {
+public class MyMediaBrowserService extends MediaBrowserService{
 
     private static final String TAG = MyMediaBrowserService.class.getSimpleName();
     private static final String MEDIA_ID_ROOT = "__ROOT__";
@@ -79,6 +80,8 @@ public class MyMediaBrowserService extends MediaBrowserService {
             case MEDIA_ID_MUSIC_BY_TITLE:
                 Log.i(TAG, "根据 '__BY_TITLE__' 组织数据");
                 mediaItems.addAll(MediaItemDataSource.getSongsByTitleFlag(this));
+                _mediaSession.setQueue(formatToQueueItem(mediaItems));
+                _mediaSession.setQueueTitle("根据 '__BY_TITLE__' 组织数据");
                 break;
             case MEDIA_ID_MUSIC_BY_ALBUM:
                 Log.i(TAG, "根据 '__BY_ALBUM__' 组织数据");
@@ -136,6 +139,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
                     Log.i(TAG, "根据 '__BY_ARTIST__歌手名称_专辑名称' 组织数据");
                     String[] split = parentId.split(String.valueOf(LEAF_SEPARATOR))[0].split(String.valueOf(CATEGORY_SEPARATOR));
                     mediaItems.addAll(MediaItemDataSource.getSongsByAlbumForArtist(this, split[1], split[2]));
+                    _mediaSession.setQueue(formatToQueueItem(mediaItems));
                 }
                 break;
         }
@@ -143,6 +147,14 @@ public class MyMediaBrowserService extends MediaBrowserService {
         result.sendResult(mediaItems);
     }
     //endregion
+
+    private ArrayList<MediaSession.QueueItem> formatToQueueItem(List<MediaItem> items) {
+        ArrayList<MediaSession.QueueItem> result = new ArrayList(items.size());
+        for (MediaItem item : items) {
+            result.add(new MediaSession.QueueItem(item.getDescription(), Long.valueOf(filterMediaId(item))));
+        }
+        return result;
+    }
 
 
     @Override
@@ -159,7 +171,10 @@ public class MyMediaBrowserService extends MediaBrowserService {
                 _mediaSession.setActive(true);
                 _mediaSession.setMetadata(songInfo.getMediaMetadata());
                 _mediaSession.setPlaybackState(
-                        _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, -1, PLAYBACK_SPEED).build()
+                        _playbackStateBuilder
+                                .setState(PlaybackState.STATE_PLAYING, -1, PLAYBACK_SPEED)
+                                .setActiveQueueItemId((Long.valueOf(mediaId)))
+                                .build()
                 );
                 _mediaPlayerAdapter.play(songInfo);
                 loadNotification();
@@ -188,17 +203,18 @@ public class MyMediaBrowserService extends MediaBrowserService {
             @Override
             public void onSkipToNext() {
                 Log.i(TAG, "onSkipToNext: ");
-                String thisId = _mediaSession.getController().getMetadata().getString(MediaMetadata.METADATA_KEY_MEDIA_ID);
-                String thatId = null;
-                for (MediaItem item : mediaItems) {
-                    if (item.getMediaId().equals(thisId)) {
-                        thatId = item.getMediaId();
-                        break;
-                    }
-                }
-                SongInfo songInfo = MediaMetadataDataSource.queryById(getApplicationContext(), thatId);
-                _mediaSession.setMetadata(songInfo.getMediaMetadata());
-                _mediaPlayerAdapter.play(songInfo);
+//                String thisId = _mediaSession.getController().getMetadata().getString(MediaMetadata.METADATA_KEY_MEDIA_ID);
+//                String thatId = null;
+//                for (MediaItem item : mediaItems) {
+//                    if (item.getMediaId().equals(thisId)) {
+//                        thatId = item.getMediaId();
+//                        break;
+//                    }
+//                }
+//                SongInfo songInfo = MediaMetadataDataSource.queryById(getApplicationContext(), thatId);
+//                _mediaSession.setMetadata(songInfo.getMediaMetadata());
+//                _mediaPlayerAdapter.play(songInfo);
+                _mediaPlayerAdapter.skipToNext();
                 loadNotification();
             }
 
@@ -216,6 +232,11 @@ public class MyMediaBrowserService extends MediaBrowserService {
                 );
             }
 
+            @Override
+            public void onSkipToQueueItem(long id) {
+                super.onSkipToQueueItem(id);
+                Log.i(TAG, "onSkipToQueueItem: ");
+            }
         });
     }
 

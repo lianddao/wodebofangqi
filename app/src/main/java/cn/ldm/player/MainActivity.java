@@ -28,7 +28,7 @@ import cn.ldm.player.fragments.PlayingFragment;
 import cn.ldm.player.model.SongInfo;
 import cn.ldm.player.services.MyMediaBrowserService;
 
-public class MainActivity extends PermissionActivity implements MusicListFragment.InteractionListener{
+public class MainActivity extends PermissionActivity implements MusicListFragment.InteractionListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private String FRAGMENT_TAG = "fragment-tag";
@@ -116,14 +116,12 @@ public class MainActivity extends PermissionActivity implements MusicListFragmen
                             @Override
                             public void onMetadataChanged(@Nullable MediaMetadata metadata) {
                                 super.onMetadataChanged(metadata);
-                                Log.i(TAG, "onMetadataChanged: " + metadata.getDescription().getTitle());
                                 updateMetadata(metadata);
                             }
 
                             @Override
                             public void onPlaybackStateChanged(@NonNull PlaybackState state) {
                                 super.onPlaybackStateChanged(state);
-                                Log.i(TAG, "onPlaybackStateChanged: ");
                                 updateUiState();
                             }
                         });
@@ -188,5 +186,4 @@ public class MainActivity extends PermissionActivity implements MusicListFragmen
     public MediaBrowser getMediaBrowser() {
         return _mediaBrowser;
     }
-
 }

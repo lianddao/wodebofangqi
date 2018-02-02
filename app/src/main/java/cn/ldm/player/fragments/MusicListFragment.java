@@ -7,6 +7,7 @@ import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.media.session.MediaController;
+import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -22,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.ldm.player.R;
-import cn.ldm.player.services.MyMediaBrowserService;
 
 
 public class MusicListFragment extends Fragment {
@@ -30,25 +30,10 @@ public class MusicListFragment extends Fragment {
     private static final String TAG = MusicListFragment.class.getSimpleName();
     private MediaItem _parentMediaItem;
     private InteractionListener mListener;
-    private List<MediaItem> _mediaItems;
-    private MediaItemAdapter _mediaItemAdapter;
+    private List<MediaItem> _mediaItems = new ArrayList<>();
+    private MusicListAdapter _mediaItemAdapter = new MusicListAdapter(_mediaItems);
 
     public MusicListFragment() {
-        _mediaItems = new ArrayList<>();
-        _mediaItemAdapter = new MediaItemAdapter(_mediaItems, new MediaItemAdapter.OnMediaItemClickListener() {
-            @Override
-            public void onClick(MediaItem mediaItem) {
-                if (mediaItem.isBrowsable()) {
-                    FragmentTransaction transaction = getFragmentManager().beginTransaction();
-                    transaction.replace(R.id.container, MusicListFragment.newInstance(mediaItem));
-                    transaction.addToBackStack(null);
-                    transaction.commit();
-                } else {
-//                    String mediaId = MyMediaBrowserService.filterMediaId(mediaItem.getMediaId());
-//                    getActivity().getMediaController().getTransportControls().playFromMediaId(mediaId, null);
-                }
-            }
-        });
     }
 
     public static MusicListFragment newInstance(MediaItem parentMediaItem) {
@@ -63,11 +48,16 @@ public class MusicListFragment extends Fragment {
 
         if (view instanceof RecyclerView) {
             RecyclerView recyclerView = (RecyclerView) view;
-            //            recyclerView.setLayoutManager(new LinearLayoutManager(context)); 或在在布局文件中使用 app:layoutManager="LinearLayoutManager"
+
+            /*
+            recyclerView.setLayoutManager(new LinearLayoutManager(context));
+            或在在布局文件中使用 app:layoutManager="LinearLayoutManager"
+            * */
+
             recyclerView.setAdapter(_mediaItemAdapter);
             recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL));
 
-            MediaBrowser mediaBrowser = mListener.getMediaBrowser();
+            final MediaBrowser mediaBrowser = mListener.getMediaBrowser();
             mediaBrowser.unsubscribe(_parentMediaItem.getMediaId());
             mediaBrowser.subscribe(_parentMediaItem.getMediaId(), new MediaBrowser.SubscriptionCallback() {
                 @Override
@@ -80,9 +70,8 @@ public class MusicListFragment extends Fragment {
                 }
             });
 
-            MediaController mediaController = getActivity().getMediaController();
-            if (mediaController != null) {
-                mediaController.registerCallback(new MediaController.Callback() {
+            if (getActivity().getMediaController() != null) {
+                getActivity().getMediaController().registerCallback(new MediaController.Callback() {
                     @Override
                     public void onMetadataChanged(@Nullable MediaMetadata metadata) {
                         Log.i(TAG, "onMetadataChanged: " + metadata.getDescription().getTitle());
@@ -90,7 +79,11 @@ public class MusicListFragment extends Fragment {
 
                     @Override
                     public void onPlaybackStateChanged(@NonNull PlaybackState state) {
-                        Log.i(TAG, "onPlaybackStateChanged: " + state.toString());
+                    }
+
+                    @Override
+                    public void onQueueChanged(@Nullable List<MediaSession.QueueItem> queue) {
+                        Log.i(TAG, "onQueueChanged: " + queue.size());
                     }
                 });
             }
