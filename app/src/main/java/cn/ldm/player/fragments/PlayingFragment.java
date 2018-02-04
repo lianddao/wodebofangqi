@@ -62,16 +62,16 @@ public class PlayingFragment extends Fragment implements MediaSeekBar.TimeChange
             public void onPlaybackStateChanged(@NonNull PlaybackState state) {
                 switch (state.getState()) {
                     case PlaybackState.STATE_PAUSED:
-                        Log.i(TAG, "onPlaybackStateChanged: 播放已经暂停");
+                        Log.i(TAG, " 播放已经暂停");
                         imgPlayPause.setImageResource(android.R.drawable.ic_media_play);
                         break;
                     case PlaybackState.STATE_STOPPED:
-                        Log.i(TAG, "onPlaybackStateChanged: 播放已经停止");
+                        Log.i(TAG, " 播放已经停止");
                         imgPlayPause.setImageResource(android.R.drawable.ic_media_play);
                         txtPlayTime.setText(MusicTool.getDisplayTime(0));
                         break;
                     case PlaybackState.STATE_PLAYING:
-                        Log.i(TAG, "onPlaybackStateChanged: 正在播放");
+                        Log.i(TAG, " 正在播放");
                         imgPlayPause.setImageResource(android.R.drawable.ic_media_pause);
                         break;
                     default:

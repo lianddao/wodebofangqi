@@ -1,14 +1,9 @@
 package cn.ldm.player.fragments;
 
 import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.content.Context;
-import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
 import android.media.browse.MediaBrowser.MediaItem;
-import android.media.session.MediaController;
-import android.media.session.MediaSession;
-import android.media.session.PlaybackState;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -28,10 +23,10 @@ import cn.ldm.player.R;
 public class MusicListFragment extends Fragment {
 
     private static final String TAG = MusicListFragment.class.getSimpleName();
-    private MediaItem _parentMediaItem;
     private InteractionListener mListener;
-    private List<MediaItem> _mediaItems = new ArrayList<>();
-    private MusicListAdapter _mediaItemAdapter = new MusicListAdapter(_mediaItems);
+    private MediaItem _parentMediaItem;
+    private List<MediaItem> _mediaItems;
+    private MusicListAdapter _mediaItemAdapter;
 
     public MusicListFragment() {
     }
@@ -39,7 +34,14 @@ public class MusicListFragment extends Fragment {
     public static MusicListFragment newInstance(MediaItem parentMediaItem) {
         MusicListFragment fragment = new MusicListFragment();
         fragment._parentMediaItem = parentMediaItem;
+        fragment._mediaItems = new ArrayList<>();
         return fragment;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        _mediaItemAdapter = new MusicListAdapter(getActivity(), _mediaItems);
     }
 
     @Override
@@ -70,23 +72,24 @@ public class MusicListFragment extends Fragment {
                 }
             });
 
-            if (getActivity().getMediaController() != null) {
-                getActivity().getMediaController().registerCallback(new MediaController.Callback() {
-                    @Override
-                    public void onMetadataChanged(@Nullable MediaMetadata metadata) {
-                        Log.i(TAG, "onMetadataChanged: " + metadata.getDescription().getTitle());
-                    }
-
-                    @Override
-                    public void onPlaybackStateChanged(@NonNull PlaybackState state) {
-                    }
-
-                    @Override
-                    public void onQueueChanged(@Nullable List<MediaSession.QueueItem> queue) {
-                        Log.i(TAG, "onQueueChanged: " + queue.size());
-                    }
-                });
-            }
+            //            if (getActivity().getMediaController() != null) {
+            //                getActivity().getMediaController().registerCallback(new MediaController.Callback() {
+            //                    @Override
+            //                    public void onMetadataChanged(@Nullable MediaMetadata metadata) {
+            //                        Log.w(TAG, "onMetadataChanged: " + metadata.getDescription().getTitle());
+            //                    }
+            //
+            //                    @Override
+            //                    public void onPlaybackStateChanged(@NonNull PlaybackState state) {
+            //                        Log.w(TAG, "onPlaybackStateChanged: " + state.toString());
+            //                    }
+            //
+            //                    @Override
+            //                    public void onQueueChanged(@Nullable List<MediaSession.QueueItem> queue) {
+            //                        Log.i(TAG, "onQueueChanged: " + queue.size());
+            //                    }
+            //                });
+            //            }
         }
         return view;
     }

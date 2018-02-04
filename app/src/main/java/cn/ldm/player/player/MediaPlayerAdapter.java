@@ -1,6 +1,8 @@
 package cn.ldm.player.player;
 
+import android.content.Context;
 import android.media.AudioManager;
+import android.media.MediaMetadata;
 import android.media.MediaPlayer;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
@@ -8,6 +10,7 @@ import android.util.Log;
 
 import java.util.List;
 
+import cn.ldm.player.datasource.MediaMetadataDataSource;
 import cn.ldm.player.model.SongInfo;
 
 import static android.media.session.PlaybackState.STATE_PAUSED;
@@ -24,11 +27,13 @@ public class MediaPlayerAdapter {
     private MediaSession _mediaSession;
     private MediaPlayer _mediaPlayer;
     private String _currentMediaId = "";
+    private Context _context;
 
-    private static final float PLAYBACK_SPEED = 1.0f;
-    private PlaybackState.Builder _builder = new PlaybackState.Builder();
+    public static final float PLAYBACK_SPEED = 1.0f;
+    private static final PlaybackState.Builder _playbackStateBuilder = new PlaybackState.Builder();
 
-    public MediaPlayerAdapter(MediaSession mediaSession) {
+    public MediaPlayerAdapter(Context context, MediaSession mediaSession) {
+        _context = context;
         _mediaSession = mediaSession;
         Log.i(TAG, "MediaPlayerAdapter: 初始的媒体id为" + _currentMediaId);
     }
@@ -112,7 +117,15 @@ public class MediaPlayerAdapter {
             Log.i(TAG, "play: " + ex.toString());
         }
         _mediaPlayer.start();
-        setNewState(PlaybackState.STATE_PLAYING, -1);
+        _mediaSession.setActive(true);
+        _mediaSession.setMetadata(songInfo.getMediaMetadata());
+        _mediaSession.setPlaybackState(
+                _playbackStateBuilder
+                        .setState(PlaybackState.STATE_PLAYING, -1, PLAYBACK_SPEED)
+                        .setActiveQueueItemId((Long.valueOf(_currentMediaId)))
+                        .build()
+        );
+        //        setNewState(PlaybackState.STATE_PLAYING, -1);
     }
 
     public void play(MediaSession.QueueItem queueItem) {
@@ -123,28 +136,45 @@ public class MediaPlayerAdapter {
         } catch (Exception ex) {
         }
         _mediaPlayer.start();
-        //        setNewState(PlaybackState.STATE_PLAYING, -1);
+        _mediaSession.setMetadata(MediaMetadataDataSource.queryById(_context, queueItem.getQueueId()).getMediaMetadata());
+        _mediaSession.setPlaybackState(_playbackStateBuilder
+                .setState(PlaybackState.STATE_PLAYING, getCurrentPosition(), PLAYBACK_SPEED)
+                .setActiveQueueItemId(queueItem.getQueueId())
+                .build()
+        );
     }
 
 
     public void pause() {
         _mediaPlayer.pause();
+        _mediaSession.setPlaybackState(_playbackStateBuilder
+                .setState(PlaybackState.STATE_PAUSED, getCurrentPosition(), PLAYBACK_SPEED)
+                .build()
+        );
     }
 
     public void play() {
         _mediaPlayer.start();
+        _mediaSession.setPlaybackState(_playbackStateBuilder
+                .setState(PlaybackState.STATE_PLAYING, _mediaSession.getController().getPlaybackState().getPosition(), 1.0f)
+                .build()
+        );
     }
 
     public void seekTo(int progress) {
         _mediaPlayer.seekTo(progress);
+        _mediaSession.setPlaybackState(_playbackStateBuilder
+                .setState(PlaybackState.STATE_PLAYING, getCurrentPosition(), 1.0f)
+                .build()
+        );
     }
 
     public void skipToNext() {
         int nextIndex = -1;
         List<MediaSession.QueueItem> queueItems = _mediaSession.getController().getQueue();
-        String id = _mediaSession.getController().getMetadata().getDescription().getMediaId();
+        long id = _mediaSession.getController().getPlaybackState().getActiveQueueItemId();
         for (MediaSession.QueueItem item : queueItems) {
-            if (item.getQueueId() == Long.valueOf(_currentMediaId)) {
+            if (item.getQueueId() == id) {
                 nextIndex = queueItems.indexOf(item) + 1;
                 break;
             }
@@ -152,7 +182,8 @@ public class MediaPlayerAdapter {
         if (nextIndex > queueItems.size() - 1) {
             nextIndex = 0;
         }
-        play(queueItems.get(nextIndex));
+        MediaSession.QueueItem queueItem = queueItems.get(nextIndex);
+        play(queueItem);
     }
 
     public int getCurrentPosition() {

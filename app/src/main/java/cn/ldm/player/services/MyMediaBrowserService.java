@@ -35,7 +35,7 @@ import cn.ldm.player.tool.MusicTool;
 /**
  * 我的媒体浏览服务
  */
-public class MyMediaBrowserService extends MediaBrowserService{
+public class MyMediaBrowserService extends MediaBrowserService {
 
     private static final String TAG = MyMediaBrowserService.class.getSimpleName();
     private static final String MEDIA_ID_ROOT = "__ROOT__";
@@ -47,7 +47,7 @@ public class MyMediaBrowserService extends MediaBrowserService{
     public static final char LEAF_SEPARATOR = 30;      //记录分隔符 RS ␞
 
     private static final float PLAYBACK_SPEED = 1.0f;
-    private static final PlaybackState.Builder _playbackStateBuilder = new PlaybackState.Builder();
+
 
     private MediaPlayerAdapter _mediaPlayerAdapter;
 
@@ -162,20 +162,13 @@ public class MyMediaBrowserService extends MediaBrowserService{
         super.onCreate();
         _mediaSession = new MediaSession(this, TAG);
         setSessionToken(_mediaSession.getSessionToken());
-        _mediaPlayerAdapter = new MediaPlayerAdapter(_mediaSession);
+        _mediaPlayerAdapter = new MediaPlayerAdapter(this,_mediaSession);
+
+        //region 统一行为:①播放器执行命令 ②更新状态
         _mediaSession.setCallback(new MediaSession.Callback() {
             @Override
             public void onPlayFromMediaId(String mediaId, Bundle extras) {
                 SongInfo songInfo = MediaMetadataDataSource.queryById(getApplicationContext(), mediaId);
-                Log.i(TAG, "onPlayFromMediaId: " + songInfo.toString());
-                _mediaSession.setActive(true);
-                _mediaSession.setMetadata(songInfo.getMediaMetadata());
-                _mediaSession.setPlaybackState(
-                        _playbackStateBuilder
-                                .setState(PlaybackState.STATE_PLAYING, -1, PLAYBACK_SPEED)
-                                .setActiveQueueItemId((Long.valueOf(mediaId)))
-                                .build()
-                );
                 _mediaPlayerAdapter.play(songInfo);
                 loadNotification();
             }
@@ -183,19 +176,11 @@ public class MyMediaBrowserService extends MediaBrowserService{
             @Override
             public void onPause() {
                 _mediaPlayerAdapter.pause();
-                _mediaSession.setPlaybackState(_playbackStateBuilder
-                        .setState(PlaybackState.STATE_PAUSED, _mediaSession.getController().getPlaybackState().getPosition(), 1.0f)
-                        .build()
-                );
                 loadNotification();
             }
 
             @Override
             public void onPlay() {
-                _mediaSession.setPlaybackState(_playbackStateBuilder
-                        .setState(PlaybackState.STATE_PLAYING, _mediaSession.getController().getPlaybackState().getPosition(), 1.0f)
-                        .build()
-                );
                 _mediaPlayerAdapter.play();
                 loadNotification();
             }
@@ -203,17 +188,6 @@ public class MyMediaBrowserService extends MediaBrowserService{
             @Override
             public void onSkipToNext() {
                 Log.i(TAG, "onSkipToNext: ");
-//                String thisId = _mediaSession.getController().getMetadata().getString(MediaMetadata.METADATA_KEY_MEDIA_ID);
-//                String thatId = null;
-//                for (MediaItem item : mediaItems) {
-//                    if (item.getMediaId().equals(thisId)) {
-//                        thatId = item.getMediaId();
-//                        break;
-//                    }
-//                }
-//                SongInfo songInfo = MediaMetadataDataSource.queryById(getApplicationContext(), thatId);
-//                _mediaSession.setMetadata(songInfo.getMediaMetadata());
-//                _mediaPlayerAdapter.play(songInfo);
                 _mediaPlayerAdapter.skipToNext();
                 loadNotification();
             }
@@ -226,10 +200,6 @@ public class MyMediaBrowserService extends MediaBrowserService{
             @Override
             public void onSeekTo(long pos) {
                 _mediaPlayerAdapter.seekTo((int) pos);
-                _mediaSession.setPlaybackState(_playbackStateBuilder
-                        .setState(PlaybackState.STATE_PLAYING, _mediaPlayerAdapter.getCurrentPosition(), 1.0f)
-                        .build()
-                );
             }
 
             @Override
@@ -241,7 +211,7 @@ public class MyMediaBrowserService extends MediaBrowserService{
     }
 
     public void loadNotification() {
-        Log.i(TAG, "loadNotification: ");
+//        Log.i(TAG, "loadNotification: ");
         MediaMetadata metadata = _mediaSession.getController().getMetadata();
         Notification.Builder builder = new Notification.Builder(this);
         String title = metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE);

@@ -56,15 +56,6 @@ public class MainActivity extends PermissionActivity implements MusicListFragmen
     }
 
     public void initAppAfterRequestPermission() {
-        //region 装入主片段
-        MusicListFragment fragment = (MusicListFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
-        if (fragment == null) {
-            Log.i(TAG, "initAppAfterRequestPermission: 加入片段");
-            FragmentTransaction transaction = getFragmentManager().beginTransaction();
-            transaction.replace(FRAGMENT_CONTAINER, MusicListFragment.newInstance(MediaItemFactory.ROOT), FRAGMENT_TAG);
-            transaction.commit();
-        }
-        //endregion
         //region 单击事件
         imgPlayPause.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -111,17 +102,24 @@ public class MainActivity extends PermissionActivity implements MusicListFragmen
                 new MediaBrowser.ConnectionCallback() {
                     @Override
                     public void onConnected() {
+                        //region 装入主片段.时机在服务连接成功之后.
+                        MusicListFragment fragment = (MusicListFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
+                        if (fragment == null) {
+                            Log.i(TAG, "initAppAfterRequestPermission: 加入片段");
+                            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                            transaction.replace(FRAGMENT_CONTAINER, MusicListFragment.newInstance(MediaItemFactory.ROOT), FRAGMENT_TAG);
+                            transaction.commit();
+                        }
+                        //endregion
                         MediaController mediaController = new MediaController(MainActivity.this, _mediaBrowser.getSessionToken());
                         mediaController.registerCallback(new MediaController.Callback() {
                             @Override
                             public void onMetadataChanged(@Nullable MediaMetadata metadata) {
-                                super.onMetadataChanged(metadata);
                                 updateMetadata(metadata);
                             }
 
                             @Override
                             public void onPlaybackStateChanged(@NonNull PlaybackState state) {
-                                super.onPlaybackStateChanged(state);
                                 updateUiState();
                             }
                         });
@@ -186,4 +184,6 @@ public class MainActivity extends PermissionActivity implements MusicListFragmen
     public MediaBrowser getMediaBrowser() {
         return _mediaBrowser;
     }
+
+    public MediaController getMediaSession() {return getMediaController();}
 }

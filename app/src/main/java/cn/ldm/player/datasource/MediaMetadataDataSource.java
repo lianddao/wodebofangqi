@@ -74,7 +74,7 @@ public class MediaMetadataDataSource {
         return result;
     }
 
-    public static SongInfo queryById(Context context, String mediaId) {
+    public static SongInfo queryById(Context context, Object mediaId) {
         Cursor cursor = null;
         try {
             cursor = context.getContentResolver().query(MEDIA_URI, PROJECTION,

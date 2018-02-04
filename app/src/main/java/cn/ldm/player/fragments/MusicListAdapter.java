@@ -2,6 +2,7 @@ package cn.ldm.player.fragments;
 
 import android.app.Activity;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.media.session.MediaController;
@@ -21,6 +22,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import cn.ldm.player.MainActivity;
 import cn.ldm.player.R;
 import cn.ldm.player.dialog.FireMissilesDialogFragment;
 import cn.ldm.player.services.MyMediaBrowserService;
@@ -34,30 +36,30 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
     private ViewGroup _viewGroup;
     private int index = -1;
 
-    public MusicListAdapter(List<MediaItem> items) {
+    public MusicListAdapter(Activity activity, List<MediaItem> items) {
+        _activity = activity;
         mValues = items;
-    }
-
-    @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        _activity = (Activity) parent.getContext();
-        _viewGroup = parent;
+        MediaController controller = ((MainActivity) _activity).getMediaController();
+        if (controller == null) {
+            Log.e(TAG, "MusicListAdapter: ");
+        }
 
         _activity.getMediaController().registerCallback(new MediaController.Callback() {
             @Override
             public void onMetadataChanged(@Nullable MediaMetadata metadata) {
-                Log.i(TAG, "onMetadataChanged: ");
-                //                View img = parent.findViewWithTag(currentPlayingIndex).findViewById(R.id.imgCurrentTag);
-                //                if (currentPlayingIndex > 0) {
-                //                    img.setVisibility(View.INVISIBLE);
-                //                }
-                //                for (MediaItem i : mValues) {
-                //                    if (i.getMediaId().equals(metadata.getDescription().getMediaId())) {
-                //                        currentPlayingIndex = mValues.indexOf(i);
-                //                        img.setVisibility(View.VISIBLE);
-                //                        img.setTag(currentPlayingIndex);
-                //                    }
-                //                }
+                View oldSelectedView = _viewGroup.findViewWithTag("SELECTED");
+                if (oldSelectedView != null) {
+                    oldSelectedView.setVisibility(View.INVISIBLE);
+                    oldSelectedView.setTag(null);
+                }
+
+                View newSelectedView = _viewGroup.findViewWithTag(metadata.getDescription().getMediaId());
+                if (newSelectedView != null) {
+                    View tagView = newSelectedView.findViewById(R.id.imgCurrentTag);
+                    tagView.setVisibility(View.VISIBLE);
+                    tagView.setTag("SELECTED");
+                    index = _viewGroup.indexOfChild(newSelectedView);
+                }
             }
 
             @Override
@@ -83,8 +85,13 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
             public void onQueueChanged(@Nullable List<MediaSession.QueueItem> queue) {
                 super.onQueueChanged(queue);
             }
-
         });
+    }
+
+
+    @Override
+    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        _viewGroup = parent;
         return new ViewHolder(LayoutInflater.from(_activity).inflate(R.layout.fragment_media_browser_item, parent, false));
     }
 
@@ -93,6 +100,9 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
     public void onBindViewHolder(final ViewHolder holder, final int position) {
         final MediaItem item = mValues.get(position);
         holder.mMediaItem = item;
+        if (item.isPlayable()) {
+            holder._view.setTag(MyMediaBrowserService.filterMediaId(item));
+        }
         holder._txtTitle.setText(item.getDescription().getTitle().toString());
         holder._imgAlbum.setVisibility(View.INVISIBLE);
 
@@ -101,18 +111,19 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
             @Override
             public void onClick(View v) {
                 if (holder.mMediaItem.isPlayable()) {
-                    if (index > -1) {
-                        View oldSelectedView = _viewGroup.findViewWithTag("SELECTED");
-                        if (oldSelectedView != null) {
-                            oldSelectedView.setVisibility(View.INVISIBLE);
-                            oldSelectedView.setTag(null);
-                        } else {
-                            Log.i(TAG, "onClick: 旧视图已在屏幕之外");
-                        }
-                    }
+                    //                    if (index > -1) {
+                    //                        View oldSelectedView = _viewGroup.findViewWithTag("SELECTED");
+                    //                        if (oldSelectedView != null) {
+                    //                            oldSelectedView.setVisibility(View.INVISIBLE);
+                    //                            oldSelectedView.setTag(null);
+                    //                        } else {
+                    //                            Log.i(TAG, "onClick: 旧视图已在屏幕之外");
+                    //                        }
+                    //                    }
+                    //                    index = position;
+                    //                    holder._imgAlbum.setVisibility(View.VISIBLE);
+                    //                    holder._imgAlbum.setTag("SELECTED");
                     index = position;
-                    holder._imgAlbum.setVisibility(View.VISIBLE);
-                    holder._imgAlbum.setTag("SELECTED");
                     String mediaId = MyMediaBrowserService.filterMediaId(holder.mMediaItem.getMediaId());
                     _activity.getMediaController().getTransportControls().playFromMediaId(mediaId, null);
                 } else {
@@ -144,8 +155,10 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
         //endregion
 
         //region 加入当前播放指示
-        if (index == position && _activity.getMediaController().getMetadata() != null) {
+        MediaMetadata metadata = _activity.getMediaController().getMetadata();
+        if (metadata!=null && metadata.getDescription().getMediaId().equals(holder._view.getTag())){
             holder._imgAlbum.setVisibility(View.VISIBLE);
+            holder._imgAlbum.setTag("SELECTED");
         }
         //endregion
     }
