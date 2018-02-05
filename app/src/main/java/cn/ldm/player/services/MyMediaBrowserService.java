@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.ldm.player.MainActivity;
+import cn.ldm.player.R;
 import cn.ldm.player.core.MusicMetadataDataSource;
 import cn.ldm.player.core.MusicScanner;
 import cn.ldm.player.datasource.MediaItemDataSource;
@@ -187,14 +188,15 @@ public class MyMediaBrowserService extends MediaBrowserService {
 
             @Override
             public void onSkipToNext() {
-                Log.i(TAG, "onSkipToNext: ");
                 _mediaPlayerAdapter.skipToNext();
                 loadNotification();
             }
 
             @Override
             public void onSkipToPrevious() {
-                super.onSkipToPrevious();
+                Log.i(TAG, "onSkipToPrevious: ");
+                _mediaPlayerAdapter.skipToPrevious();
+                loadNotification();
             }
 
             @Override
@@ -211,7 +213,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
     }
 
     public void loadNotification() {
-//        Log.i(TAG, "loadNotification: ");
+        Log.i(TAG, "loadNotification: ");
         MediaMetadata metadata = _mediaSession.getController().getMetadata();
         Notification.Builder builder = new Notification.Builder(this);
         String title = metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE);
@@ -220,7 +222,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
         Notification notification = builder
                 .setContentTitle(title)
                 .setContentText(subtitle)
-                .setSmallIcon(android.R.drawable.ic_media_play)//通知栏顶部的图片
+                .setSmallIcon(R.mipmap.ic_launcher)//通知栏顶部的图片
                 .setLargeIcon(MusicScanner.getInstance(this).retrieveAlbumArt(metadata))//展开通知栏所展示的图片
                 .setContentIntent(createContentIntent(metadata.getDescription()))
                 .setVisibility(Notification.VISIBILITY_PUBLIC)

@@ -55,9 +55,15 @@ public class PlayingFragment extends Fragment implements MediaSeekBar.TimeChange
         txtSubtitle = (TextView) view.findViewById(R.id.txtSubtitle);
         txtPlayTime = (TextView) view.findViewById(R.id.txtPlayTime);
         txtTotalTime = (TextView) view.findViewById(R.id.txtTotalTime);
-
         _mediaController = getActivity().getMediaController();
+        updateUi();
+        //region MediaController 注册回调
         _mediaController.registerCallback(new MediaController.Callback() {
+            @Override
+            public void onMetadataChanged(@Nullable MediaMetadata metadata) {
+                updateUi();
+            }
+
             @Override
             public void onPlaybackStateChanged(@NonNull PlaybackState state) {
                 switch (state.getState()) {
@@ -78,30 +84,8 @@ public class PlayingFragment extends Fragment implements MediaSeekBar.TimeChange
                         break;
                 }
             }
-
-            @Override
-            public void onMetadataChanged(@Nullable MediaMetadata metadata) {
-                super.onMetadataChanged(metadata);
-            }
         });
-
-        //region 设置UI
-        MediaMetadata metadata = _mediaController.getMetadata();
-        _currentSong = SongInfo.make(metadata);
-        imgAlbum.setImageBitmap(MusicScanner.getInstance(getActivity()).retrieveAlbumArt(_currentSong.getMediaMetadata()));
-        txtTitle.setText(_currentSong.getTitle());
-        txtSubtitle.setText(_currentSong.getSubtitle());
-
-        seekBar.setMax((int) metadata.getLong(MediaMetadata.METADATA_KEY_DURATION));
-        seekBar.setProgress((int) _mediaController.getPlaybackState().getPosition());
-        //        seekBar.setMediaController(_mediaController);
-        seekBar.startAnimator(getActivity(), this);
-
-        imgPlayPause.setImageResource(RES_PAUSE);
-        txtPlayTime.setText("0");
-        txtTotalTime.setText(seekBar.getMax() + "");
         //endregion
-
         //region 单击事件
         imgPlayPause.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -109,7 +93,6 @@ public class PlayingFragment extends Fragment implements MediaSeekBar.TimeChange
                 switch (_mediaController.getPlaybackState().getState()) {
                     case PlaybackState.STATE_PLAYING:
                         _mediaController.getTransportControls().pause();
-                        //                        imgPlayPause.setImageResource(android.R.drawable.ic_media_pause);
                         break;
                     case PlaybackState.STATE_PAUSED:
                     case PlaybackState.STATE_STOPPED:
@@ -127,9 +110,32 @@ public class PlayingFragment extends Fragment implements MediaSeekBar.TimeChange
                 _mediaController.getTransportControls().skipToNext();
             }
         });
+
+        imgPrev.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                _mediaController.getTransportControls().skipToPrevious();
+            }
+        });
         //endregion
 
         return view;
+    }
+
+    private void updateUi(){
+        MediaMetadata metadata = _mediaController.getMetadata();
+        _currentSong = SongInfo.make(metadata);
+        imgAlbum.setImageBitmap(MusicScanner.getInstance(getActivity()).retrieveAlbumArt(_currentSong.getMediaMetadata()));
+        txtTitle.setText(_currentSong.getTitle());
+        txtSubtitle.setText(_currentSong.getSubtitle());
+
+        seekBar.setMax((int) metadata.getLong(MediaMetadata.METADATA_KEY_DURATION));
+        seekBar.setProgress((int) _mediaController.getPlaybackState().getPosition());
+        seekBar.startAnimator(getActivity(), this);
+
+        imgPlayPause.setImageResource(RES_PAUSE);
+        txtPlayTime.setText("0");
+        txtTotalTime.setText(seekBar.getMax() + "");
     }
 
     @Override

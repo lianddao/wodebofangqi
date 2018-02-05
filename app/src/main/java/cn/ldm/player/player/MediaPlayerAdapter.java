@@ -1,5 +1,6 @@
 package cn.ldm.player.player;
 
+import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaMetadata;
@@ -12,6 +13,7 @@ import java.util.List;
 
 import cn.ldm.player.datasource.MediaMetadataDataSource;
 import cn.ldm.player.model.SongInfo;
+import cn.ldm.player.tool.MusicTool;
 
 import static android.media.session.PlaybackState.STATE_PAUSED;
 import static android.media.session.PlaybackState.STATE_PLAYING;
@@ -49,8 +51,6 @@ public class MediaPlayerAdapter {
                     Log.i(TAG, "onCompletion: 播放结束");
                     _mediaSession.getController().getTransportControls().rewind();
                     skipToNext();
-                    //                    _mediaSession.setPlaybackState(_builder.setState(PlaybackState.STATE_STOPPED, -1, PLAYBACK_SPEED).build());
-
                 }
             });
             _mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -76,18 +76,6 @@ public class MediaPlayerAdapter {
         return _currentMediaId.length() > 0 && !_currentMediaId.equals(mediaId);
     }
 
-    private void setNewState(int playbackState, int position) {
-        _mediaSession.setPlaybackState(new PlaybackState.Builder().setState(playbackState, position, 1.0f).build());
-        switch (playbackState) {
-            case STATE_PLAYING:
-                break;
-            case STATE_PAUSED:
-                break;
-            case STATE_STOPPED:
-                break;
-        }
-    }
-
     public void play(SongInfo songInfo) {
         if (isInitializing()) {
             Log.i(TAG, "play: 初始化");
@@ -98,12 +86,10 @@ public class MediaPlayerAdapter {
                 Log.i(TAG, "play: 歌曲相同");
                 if (isPlaying()) {
                     _mediaPlayer.pause();
-                    setNewState(PlaybackState.STATE_PAUSED, _mediaPlayer.getCurrentPosition());
                     return;
                 } else {
                     Log.i(TAG, "play: 判断当前的媒体状态,根据状态时暂停或停止等做处理");
                     _mediaPlayer.start();
-                    setNewState(PlaybackState.STATE_PLAYING, _mediaPlayer.getCurrentPosition());
                     return;
                 }
             }
@@ -120,8 +106,7 @@ public class MediaPlayerAdapter {
         _mediaSession.setActive(true);
         _mediaSession.setMetadata(songInfo.getMediaMetadata());
         _mediaSession.setPlaybackState(
-                _playbackStateBuilder
-                        .setState(PlaybackState.STATE_PLAYING, -1, PLAYBACK_SPEED)
+                _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, -1, PLAYBACK_SPEED)
                         .setActiveQueueItemId((Long.valueOf(_currentMediaId)))
                         .build()
         );
@@ -137,35 +122,34 @@ public class MediaPlayerAdapter {
         }
         _mediaPlayer.start();
         _mediaSession.setMetadata(MediaMetadataDataSource.queryById(_context, queueItem.getQueueId()).getMediaMetadata());
-        _mediaSession.setPlaybackState(_playbackStateBuilder
-                .setState(PlaybackState.STATE_PLAYING, getCurrentPosition(), PLAYBACK_SPEED)
-                .setActiveQueueItemId(queueItem.getQueueId())
-                .build()
+        Log.i(TAG, "play: " + MusicTool.getDisplayTime(_mediaPlayer.getCurrentPosition()));
+        _mediaSession.setPlaybackState(
+                _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, _mediaPlayer.getCurrentPosition(), PLAYBACK_SPEED)
+                        .setActiveQueueItemId(queueItem.getQueueId())
+                        .build()
         );
     }
 
 
     public void pause() {
         _mediaPlayer.pause();
-        _mediaSession.setPlaybackState(_playbackStateBuilder
-                .setState(PlaybackState.STATE_PAUSED, getCurrentPosition(), PLAYBACK_SPEED)
-                .build()
+        Log.i(TAG, "pause: " + MusicTool.getDisplayTime(_mediaPlayer.getCurrentPosition()));
+        _mediaSession.setPlaybackState(
+                _playbackStateBuilder.setState(PlaybackState.STATE_PAUSED, _mediaPlayer.getCurrentPosition(), PLAYBACK_SPEED).build()
         );
     }
 
     public void play() {
         _mediaPlayer.start();
-        _mediaSession.setPlaybackState(_playbackStateBuilder
-                .setState(PlaybackState.STATE_PLAYING, _mediaSession.getController().getPlaybackState().getPosition(), 1.0f)
-                .build()
+        _mediaSession.setPlaybackState(
+                _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, _mediaPlayer.getCurrentPosition(), 1.0f).build()
         );
     }
 
     public void seekTo(int progress) {
         _mediaPlayer.seekTo(progress);
-        _mediaSession.setPlaybackState(_playbackStateBuilder
-                .setState(PlaybackState.STATE_PLAYING, getCurrentPosition(), 1.0f)
-                .build()
+        _mediaSession.setPlaybackState(
+                _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, _mediaPlayer.getCurrentPosition(), 1.0f).build()
         );
     }
 
@@ -186,8 +170,21 @@ public class MediaPlayerAdapter {
         play(queueItem);
     }
 
-    public int getCurrentPosition() {
-        return _mediaPlayer.getCurrentPosition();
+    public void skipToPrevious() {
+        int prevIndex = -1;
+        List<MediaSession.QueueItem> queueItems = _mediaSession.getController().getQueue();
+        long id = _mediaSession.getController().getPlaybackState().getActiveQueueItemId();
+        for (MediaSession.QueueItem item : queueItems) {
+            if (item.getQueueId() == id) {
+                prevIndex = queueItems.indexOf(item) - 1;
+                break;
+            }
+        }
+        if (prevIndex < 0) {
+            prevIndex = queueItems.size() - 1;
+        }
+        MediaSession.QueueItem queueItem = queueItems.get(prevIndex);
+        play(queueItem);
     }
 
     public static String _filterMediaId(String mediaId) {

@@ -1,19 +1,3 @@
-/*
- * Copyright 2017 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package cn.ldm.player.ui;
 
 import android.animation.ValueAnimator;
@@ -35,8 +19,7 @@ import android.widget.TextView;
 import cn.ldm.player.fragments.PlayingFragment;
 
 /**
- * SeekBar that can be used with a {@link MediaSessionCompat} to track and seek in playing
- * media.
+ * SeekBar，可以与 {@link android.media.session.MediaSession} 一起使用来跟踪和查找播放媒体。
  */
 
 public class MediaSeekBar extends SeekBar implements ValueAnimator.AnimatorUpdateListener {
@@ -75,8 +58,7 @@ public class MediaSeekBar extends SeekBar implements ValueAnimator.AnimatorUpdat
 
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
-            //            mMediaController.getTransportControls().seekTo(getProgress());
-            ((Activity) getRootView().getContext()).getMediaController().getTransportControls().seekTo(getProgress());
+            ((Activity)getContext()).getMediaController().getTransportControls().seekTo(getProgress());
             mIsTracking = false;
         }
     };
@@ -93,10 +75,9 @@ public class MediaSeekBar extends SeekBar implements ValueAnimator.AnimatorUpdat
         super(context, attrs);
         super.setOnSeekBarChangeListener(mOnSeekBarChangeListener);
 
-        ((Activity) getRootView().getContext()).getMediaController().registerCallback(new MediaController.Callback() {
+        ((Activity) getContext()).getMediaController().registerCallback(new MediaController.Callback() {
             @Override
             public void onPlaybackStateChanged(@NonNull PlaybackState state) {
-                super.onPlaybackStateChanged(state);
                 // 如果有一个正在进行的动画，现在就停止它
                 if (mProgressAnimator != null) {
                     mProgressAnimator.cancel();
@@ -122,7 +103,11 @@ public class MediaSeekBar extends SeekBar implements ValueAnimator.AnimatorUpdat
 
             @Override
             public void onMetadataChanged(@Nullable MediaMetadata metadata) {
-                super.onMetadataChanged(metadata);
+                // 如果有一个正在进行的动画，现在就停止它
+                if (mProgressAnimator != null) {
+                    mProgressAnimator.cancel();
+                    mProgressAnimator = null;
+                }
             }
         });
     }
