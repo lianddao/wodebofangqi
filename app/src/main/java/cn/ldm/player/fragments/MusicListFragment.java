@@ -71,25 +71,6 @@ public class MusicListFragment extends Fragment {
                     _mediaItemAdapter.notifyDataSetChanged();
                 }
             });
-
-            //            if (getActivity().getMediaController() != null) {
-            //                getActivity().getMediaController().registerCallback(new MediaController.Callback() {
-            //                    @Override
-            //                    public void onMetadataChanged(@Nullable MediaMetadata metadata) {
-            //                        Log.w(TAG, "onMetadataChanged: " + metadata.getDescription().getTitle());
-            //                    }
-            //
-            //                    @Override
-            //                    public void onPlaybackStateChanged(@NonNull PlaybackState state) {
-            //                        Log.w(TAG, "onPlaybackStateChanged: " + state.toString());
-            //                    }
-            //
-            //                    @Override
-            //                    public void onQueueChanged(@Nullable List<MediaSession.QueueItem> queue) {
-            //                        Log.i(TAG, "onQueueChanged: " + queue.size());
-            //                    }
-            //                });
-            //            }
         }
         return view;
     }

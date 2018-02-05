@@ -3,6 +3,7 @@ package cn.ldm.player.services;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.graphics.drawable.Icon;
 import android.media.MediaDescription;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser.MediaItem;
@@ -15,6 +16,8 @@ import android.service.media.MediaBrowserService;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
+
+import org.w3c.dom.ProcessingInstruction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -157,13 +160,20 @@ public class MyMediaBrowserService extends MediaBrowserService {
         return result;
     }
 
+    private MediaNotificationManager _mediaNotificationManager;
+
 
     @Override
     public void onCreate() {
         super.onCreate();
         _mediaSession = new MediaSession(this, TAG);
         setSessionToken(_mediaSession.getSessionToken());
-        _mediaPlayerAdapter = new MediaPlayerAdapter(this,_mediaSession);
+        _mediaPlayerAdapter = new MediaPlayerAdapter(this, _mediaSession);
+
+        try {
+            _mediaNotificationManager = new MediaNotificationManager(this);
+        } catch (Exception ex) {
+        }
 
         //region 统一行为:①播放器执行命令 ②更新状态
         _mediaSession.setCallback(new MediaSession.Callback() {
@@ -171,6 +181,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
             public void onPlayFromMediaId(String mediaId, Bundle extras) {
                 SongInfo songInfo = MediaMetadataDataSource.queryById(getApplicationContext(), mediaId);
                 _mediaPlayerAdapter.play(songInfo);
+//                _mediaNotificationManager.startNotification();
                 loadNotification();
             }
 
@@ -212,7 +223,26 @@ public class MyMediaBrowserService extends MediaBrowserService {
         });
     }
 
+    private static final int REQUEST_CODE = 1;
+    private static final String LAB_PAUSE = "暂停", LAB_PLAY = "播放", LAB_PREV = "上一曲", LAB_NEXT = "下一曲";
+
     public void loadNotification() {
+        final Icon
+                ICON_PAUSE = Icon.createWithResource(this, android.R.drawable.ic_media_pause),
+                ICON_PLAY = Icon.createWithResource(this, android.R.drawable.ic_media_play),
+                ICON_PREV = Icon.createWithResource(this, android.R.drawable.ic_media_previous),
+                ICON_NEXT = Icon.createWithResource(this, android.R.drawable.ic_media_next);
+        final PendingIntent
+                PI_PAUSE = PendingIntent.getBroadcast(this, REQUEST_CODE, new Intent(LAB_PAUSE), PendingIntent.FLAG_CANCEL_CURRENT),
+                PI_PLAY = PendingIntent.getBroadcast(this, REQUEST_CODE, new Intent(LAB_PLAY), PendingIntent.FLAG_CANCEL_CURRENT),
+                PI_PREV = PendingIntent.getBroadcast(this, REQUEST_CODE, new Intent(LAB_PREV), PendingIntent.FLAG_CANCEL_CURRENT),
+                PI_NEXT = PendingIntent.getBroadcast(this, REQUEST_CODE, new Intent(LAB_NEXT), PendingIntent.FLAG_CANCEL_CURRENT);
+        final Notification.Action
+                ACTION_PAUSE = new Notification.Action.Builder(ICON_PAUSE, LAB_PAUSE, PI_PAUSE).build(),
+                ACTION_PLAY = new Notification.Action.Builder(ICON_PLAY, LAB_PLAY, PI_PLAY).build(),
+                ACTION_PREV = new Notification.Action.Builder(ICON_PREV, LAB_PREV, PI_PREV).build(),
+                ACTION_NEXT = new Notification.Action.Builder(ICON_NEXT, LAB_NEXT, PI_NEXT).build();
+
         Log.i(TAG, "loadNotification: ");
         MediaMetadata metadata = _mediaSession.getController().getMetadata();
         Notification.Builder builder = new Notification.Builder(this);
@@ -222,19 +252,25 @@ public class MyMediaBrowserService extends MediaBrowserService {
         Notification notification = builder
                 .setContentTitle(title)
                 .setContentText(subtitle)
-                .setSmallIcon(R.mipmap.ic_launcher)//通知栏顶部的图片
+                .setSmallIcon(android.R.drawable.ic_menu_directions)//通知栏顶部的图片
                 .setLargeIcon(MusicScanner.getInstance(this).retrieveAlbumArt(metadata))//展开通知栏所展示的图片
                 .setContentIntent(createContentIntent(metadata.getDescription()))
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .addAction(ACTION_PREV)
+                .addAction(ACTION_PLAY)
+                .addAction(ACTION_NEXT)
                 .setStyle(new Notification.MediaStyle().setMediaSession(_mediaSession.getSessionToken()))
                 .build();
         startForeground(1, notification);
     }
 
+
     private PendingIntent createContentIntent(MediaDescription description) {
-        Intent openUI = new Intent(this, MainActivity.class);
-        openUI.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        return PendingIntent.getActivity(this, 1, openUI, PendingIntent.FLAG_CANCEL_CURRENT);
+        PendingIntent pendingIntent = _mediaSession.getController().getSessionActivity();
+        return pendingIntent;
+        //        Intent openUI = new Intent(this, MainActivity.class);
+        //        openUI.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        //        return PendingIntent.getActivity(this, 1, openUI, PendingIntent.FLAG_CANCEL_CURRENT);
     }
 
     private final IBinder mBinder = new LocalBinder();
