@@ -2,7 +2,10 @@ package cn.ldm.player.services;
 
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.drawable.Icon;
 import android.media.MediaDescription;
 import android.media.MediaMetadata;
@@ -17,13 +20,10 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import org.w3c.dom.ProcessingInstruction;
-
 import java.util.ArrayList;
 import java.util.List;
 
-import cn.ldm.player.MainActivity;
-import cn.ldm.player.R;
+import cn.ldm.player.activities.PlayingActivity;
 import cn.ldm.player.core.MusicMetadataDataSource;
 import cn.ldm.player.core.MusicScanner;
 import cn.ldm.player.datasource.MediaItemDataSource;
@@ -33,7 +33,6 @@ import cn.ldm.player.model.Playlist;
 import cn.ldm.player.model.Song;
 import cn.ldm.player.model.SongInfo;
 import cn.ldm.player.player.MediaPlayerAdapter;
-import cn.ldm.player.tool.MusicTool;
 
 
 /**
@@ -55,7 +54,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
 
     private MediaPlayerAdapter _mediaPlayerAdapter;
 
-    private MediaSession _mediaSession;
+    private MediaSession _session;
 
     private List<MediaItem> mediaItems = new ArrayList<>();
 
@@ -84,8 +83,8 @@ public class MyMediaBrowserService extends MediaBrowserService {
             case MEDIA_ID_MUSIC_BY_TITLE:
                 Log.i(TAG, "根据 '__BY_TITLE__' 组织数据");
                 mediaItems.addAll(MediaItemDataSource.getSongsByTitleFlag(this));
-                _mediaSession.setQueue(formatToQueueItem(mediaItems));
-                _mediaSession.setQueueTitle("根据 '__BY_TITLE__' 组织数据");
+                _session.setQueue(formatToQueueItem(mediaItems));
+                _session.setQueueTitle("根据 '__BY_TITLE__' 组织数据");
                 break;
             case MEDIA_ID_MUSIC_BY_ALBUM:
                 Log.i(TAG, "根据 '__BY_ALBUM__' 组织数据");
@@ -143,7 +142,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
                     Log.i(TAG, "根据 '__BY_ARTIST__歌手名称_专辑名称' 组织数据");
                     String[] split = parentId.split(String.valueOf(LEAF_SEPARATOR))[0].split(String.valueOf(CATEGORY_SEPARATOR));
                     mediaItems.addAll(MediaItemDataSource.getSongsByAlbumForArtist(this, split[1], split[2]));
-                    _mediaSession.setQueue(formatToQueueItem(mediaItems));
+                    _session.setQueue(formatToQueueItem(mediaItems));
                 }
                 break;
         }
@@ -162,26 +161,24 @@ public class MyMediaBrowserService extends MediaBrowserService {
 
     private MediaNotificationManager _mediaNotificationManager;
 
+    private MyNotificationManager _myNotificationManager;
+
 
     @Override
     public void onCreate() {
         super.onCreate();
-        _mediaSession = new MediaSession(this, TAG);
-        setSessionToken(_mediaSession.getSessionToken());
-        _mediaPlayerAdapter = new MediaPlayerAdapter(this, _mediaSession);
 
-        try {
-            _mediaNotificationManager = new MediaNotificationManager(this);
-        } catch (Exception ex) {
-        }
-
-        //region 统一行为:①播放器执行命令 ②更新状态
-        _mediaSession.setCallback(new MediaSession.Callback() {
+        //region 设置 MediaSession 字段
+        _session = new MediaSession(this, TAG);
+        _session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        Intent intent = new Intent(this, PlayingActivity.class);
+        intent.putExtra("token", _session.getSessionToken());
+        _session.setSessionActivity(PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT));
+        _session.setCallback(new MediaSession.Callback() {
             @Override
             public void onPlayFromMediaId(String mediaId, Bundle extras) {
                 SongInfo songInfo = MediaMetadataDataSource.queryById(getApplicationContext(), mediaId);
                 _mediaPlayerAdapter.play(songInfo);
-//                _mediaNotificationManager.startNotification();
                 loadNotification();
             }
 
@@ -205,7 +202,6 @@ public class MyMediaBrowserService extends MediaBrowserService {
 
             @Override
             public void onSkipToPrevious() {
-                Log.i(TAG, "onSkipToPrevious: ");
                 _mediaPlayerAdapter.skipToPrevious();
                 loadNotification();
             }
@@ -221,10 +217,26 @@ public class MyMediaBrowserService extends MediaBrowserService {
                 Log.i(TAG, "onSkipToQueueItem: ");
             }
         });
+        //endregion
+
+        setSessionToken(_session.getSessionToken());
+        _mediaPlayerAdapter = new MediaPlayerAdapter(this, _session);
+
+        try {
+            _mediaNotificationManager = new MediaNotificationManager(this);
+            _myNotificationManager = new MyNotificationManager();
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(PAUSE);
+            filter.addAction(PLAY);
+            filter.addAction(PREV);
+            filter.addAction(NEXT);
+            MyMediaBrowserService.this.registerReceiver(_myNotificationManager, filter);
+        } catch (Exception ex) {
+        }
     }
 
     private static final int REQUEST_CODE = 1;
-    private static final String LAB_PAUSE = "暂停", LAB_PLAY = "播放", LAB_PREV = "上一曲", LAB_NEXT = "下一曲";
+    private static final String PAUSE = "暂停", PLAY = "播放", PREV = "上一曲", NEXT = "下一曲";
 
     public void loadNotification() {
         final Icon
@@ -232,23 +244,40 @@ public class MyMediaBrowserService extends MediaBrowserService {
                 ICON_PLAY = Icon.createWithResource(this, android.R.drawable.ic_media_play),
                 ICON_PREV = Icon.createWithResource(this, android.R.drawable.ic_media_previous),
                 ICON_NEXT = Icon.createWithResource(this, android.R.drawable.ic_media_next);
+        final Intent
+                INTENT_PAUSE = new Intent(PAUSE).setPackage(this.getPackageName()),
+                INTENT_PLAY = new Intent(PLAY).setPackage(this.getPackageName()),
+                INTENT_PREV = new Intent(PREV).setPackage(this.getPackageName()),
+                INTENT_NEXT = new Intent(NEXT).setPackage(this.getPackageName());
         final PendingIntent
-                PI_PAUSE = PendingIntent.getBroadcast(this, REQUEST_CODE, new Intent(LAB_PAUSE), PendingIntent.FLAG_CANCEL_CURRENT),
-                PI_PLAY = PendingIntent.getBroadcast(this, REQUEST_CODE, new Intent(LAB_PLAY), PendingIntent.FLAG_CANCEL_CURRENT),
-                PI_PREV = PendingIntent.getBroadcast(this, REQUEST_CODE, new Intent(LAB_PREV), PendingIntent.FLAG_CANCEL_CURRENT),
-                PI_NEXT = PendingIntent.getBroadcast(this, REQUEST_CODE, new Intent(LAB_NEXT), PendingIntent.FLAG_CANCEL_CURRENT);
+                PI_PAUSE = PendingIntent.getBroadcast(this, REQUEST_CODE, INTENT_PAUSE, PendingIntent.FLAG_CANCEL_CURRENT),
+                PI_PLAY = PendingIntent.getBroadcast(this, REQUEST_CODE, INTENT_PLAY, PendingIntent.FLAG_CANCEL_CURRENT),
+                PI_PREV = PendingIntent.getBroadcast(this, REQUEST_CODE, INTENT_PREV, PendingIntent.FLAG_CANCEL_CURRENT),
+                PI_NEXT = PendingIntent.getBroadcast(this, REQUEST_CODE, INTENT_NEXT, PendingIntent.FLAG_CANCEL_CURRENT);
         final Notification.Action
-                ACTION_PAUSE = new Notification.Action.Builder(ICON_PAUSE, LAB_PAUSE, PI_PAUSE).build(),
-                ACTION_PLAY = new Notification.Action.Builder(ICON_PLAY, LAB_PLAY, PI_PLAY).build(),
-                ACTION_PREV = new Notification.Action.Builder(ICON_PREV, LAB_PREV, PI_PREV).build(),
-                ACTION_NEXT = new Notification.Action.Builder(ICON_NEXT, LAB_NEXT, PI_NEXT).build();
+                ACTION_PAUSE = new Notification.Action.Builder(ICON_PAUSE, PAUSE, PI_PAUSE).build(),
+                ACTION_PLAY = new Notification.Action.Builder(ICON_PLAY, PLAY, PI_PLAY).build(),
+                ACTION_PREV = new Notification.Action.Builder(ICON_PREV, PREV, PI_PREV).build(),
+                ACTION_NEXT = new Notification.Action.Builder(ICON_NEXT, NEXT, PI_NEXT).build();
 
-        Log.i(TAG, "loadNotification: ");
-        MediaMetadata metadata = _mediaSession.getController().getMetadata();
+        MediaMetadata metadata = _session.getController().getMetadata();
         Notification.Builder builder = new Notification.Builder(this);
         String title = metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE);
         String subtitle = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST)
                 + " - " + metadata.getString(MediaMetadata.METADATA_KEY_ALBUM);
+
+        Notification.Action actionPlayOrPause;
+        boolean isPlaying;
+        if (_session.getController().getPlaybackState().getState() == PlaybackState.STATE_PLAYING) {
+            actionPlayOrPause = ACTION_PAUSE;
+            isPlaying = true;
+        } else {
+            actionPlayOrPause = ACTION_PLAY;
+            isPlaying = false;
+        }
+
+
+        Log.i(TAG, "loadNotification: 新建一个通知");
         Notification notification = builder
                 .setContentTitle(title)
                 .setContentText(subtitle)
@@ -257,16 +286,46 @@ public class MyMediaBrowserService extends MediaBrowserService {
                 .setContentIntent(createContentIntent(metadata.getDescription()))
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .addAction(ACTION_PREV)
-                .addAction(ACTION_PLAY)
+                .addAction(actionPlayOrPause)
                 .addAction(ACTION_NEXT)
-                .setStyle(new Notification.MediaStyle().setMediaSession(_mediaSession.getSessionToken()))
+                .setWhen(System.currentTimeMillis() - _session.getController().getPlaybackState().getPosition())
+                .setShowWhen(true)
+                .setUsesChronometer(isPlaying)
+                .setStyle(new Notification.MediaStyle().setMediaSession(_session.getSessionToken()))
                 .build();
         startForeground(1, notification);
     }
 
+    public class MyNotificationManager extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch (intent.getAction()) {
+                case PAUSE:
+                    Log.i(TAG, "onReceive: 暂停");
+                    _session.getController().getTransportControls().pause();
+                    break;
+                case PLAY:
+                    Log.i(TAG, "onReceive: 播放");
+                    _session.getController().getTransportControls().play();
+                    break;
+                case PREV:
+                    Log.i(TAG, "onReceive: 上一曲");
+                    _session.getController().getTransportControls().skipToPrevious();
+                    break;
+                case NEXT:
+                    Log.i(TAG, "onReceive: 下一曲");
+                    _session.getController().getTransportControls().skipToNext();
+                    break;
+                default:
+                    Log.i(TAG, "onReceive: 意图无效");
+                    break;
+            }
+        }
+    }
+
 
     private PendingIntent createContentIntent(MediaDescription description) {
-        PendingIntent pendingIntent = _mediaSession.getController().getSessionActivity();
+        PendingIntent pendingIntent = _session.getController().getSessionActivity();
         return pendingIntent;
         //        Intent openUI = new Intent(this, MainActivity.class);
         //        openUI.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);

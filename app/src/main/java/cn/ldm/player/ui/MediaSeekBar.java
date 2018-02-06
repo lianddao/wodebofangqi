@@ -105,6 +105,7 @@ public class MediaSeekBar extends SeekBar implements ValueAnimator.AnimatorUpdat
             public void onMetadataChanged(@Nullable MediaMetadata metadata) {
                 // 如果有一个正在进行的动画，现在就停止它
                 if (mProgressAnimator != null) {
+                    Log.i(TAG, "onMetadataChanged: 清空动画");
                     mProgressAnimator.cancel();
                     mProgressAnimator = null;
                 }
@@ -166,6 +167,7 @@ public class MediaSeekBar extends SeekBar implements ValueAnimator.AnimatorUpdat
         mProgressAnimator.start();
     }
 
+    // TODO: 2018.02.06.0006 拖动进度条,同步更新通知栏当前进度时间
 
     //    public void disconnectController() {
     //        if (mMediaController != null) {

@@ -131,11 +131,14 @@ public class PlayingFragment extends Fragment implements MediaSeekBar.TimeChange
 
         seekBar.setMax((int) metadata.getLong(MediaMetadata.METADATA_KEY_DURATION));
         seekBar.setProgress((int) _mediaController.getPlaybackState().getPosition());
-        seekBar.startAnimator(getActivity(), this);
-
+        seekBar.startAnimator(seekBar.getContext(), this);
         imgPlayPause.setImageResource(RES_PAUSE);
         txtPlayTime.setText("0");
         txtTotalTime.setText(seekBar.getMax() + "");
+    }
+
+    private void updateNotification(){
+
     }
 
     @Override
