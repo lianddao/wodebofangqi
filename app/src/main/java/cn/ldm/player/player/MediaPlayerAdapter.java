@@ -49,7 +49,9 @@ public class MediaPlayerAdapter {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
                     Log.i(TAG, "onCompletion: 播放结束");
-                    _mediaSession.getController().getTransportControls().rewind();
+                    _mediaSession.setPlaybackState(
+                            _playbackStateBuilder.setState(PlaybackState.STATE_SKIPPING_TO_NEXT, 0, PLAYBACK_SPEED).build()
+                    );
                     skipToNext();
                 }
             });
@@ -86,10 +88,18 @@ public class MediaPlayerAdapter {
                 Log.i(TAG, "play: 歌曲相同");
                 if (isPlaying()) {
                     _mediaPlayer.pause();
+                    _mediaSession.setPlaybackState(
+                            _playbackStateBuilder.setState(PlaybackState.STATE_PAUSED, _mediaPlayer.getCurrentPosition(), PLAYBACK_SPEED)
+                                    .build()
+                    );
                     return;
                 } else {
                     Log.i(TAG, "play: 判断当前的媒体状态,根据状态时暂停或停止等做处理");
                     _mediaPlayer.start();
+                    _mediaSession.setPlaybackState(
+                            _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, _mediaPlayer.getCurrentPosition(), PLAYBACK_SPEED)
+                                    .build()
+                    );
                     return;
                 }
             }
@@ -122,7 +132,7 @@ public class MediaPlayerAdapter {
         }
         _mediaPlayer.start();
         _mediaSession.setMetadata(MediaMetadataDataSource.queryById(_context, queueItem.getQueueId()).getMediaMetadata());
-        Log.i(TAG, "play: " + MusicTool.getDisplayTime(_mediaPlayer.getCurrentPosition()));
+        Log.i(TAG, "play: 播放");
         _mediaSession.setPlaybackState(
                 _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, _mediaPlayer.getCurrentPosition(), PLAYBACK_SPEED)
                         .setActiveQueueItemId(queueItem.getQueueId())

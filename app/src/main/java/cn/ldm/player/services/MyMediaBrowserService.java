@@ -10,6 +10,7 @@ import android.graphics.drawable.Icon;
 import android.media.MediaDescription;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser.MediaItem;
+import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.os.Binder;
@@ -83,8 +84,8 @@ public class MyMediaBrowserService extends MediaBrowserService {
             case MEDIA_ID_MUSIC_BY_TITLE:
                 Log.i(TAG, "根据 '__BY_TITLE__' 组织数据");
                 mediaItems.addAll(MediaItemDataSource.getSongsByTitleFlag(this));
-                _session.setQueue(formatToQueueItem(mediaItems));
-                _session.setQueueTitle("根据 '__BY_TITLE__' 组织数据");
+//                _session.setQueue(formatToQueueItem(mediaItems));
+//                _session.setQueueTitle("根据 '__BY_TITLE__' 组织数据");
                 break;
             case MEDIA_ID_MUSIC_BY_ALBUM:
                 Log.i(TAG, "根据 '__BY_ALBUM__' 组织数据");
@@ -142,11 +143,11 @@ public class MyMediaBrowserService extends MediaBrowserService {
                     Log.i(TAG, "根据 '__BY_ARTIST__歌手名称_专辑名称' 组织数据");
                     String[] split = parentId.split(String.valueOf(LEAF_SEPARATOR))[0].split(String.valueOf(CATEGORY_SEPARATOR));
                     mediaItems.addAll(MediaItemDataSource.getSongsByAlbumForArtist(this, split[1], split[2]));
-                    _session.setQueue(formatToQueueItem(mediaItems));
+
                 }
                 break;
         }
-
+        _session.setQueue(formatToQueueItem(mediaItems));
         result.sendResult(mediaItems);
     }
     //endregion
@@ -154,7 +155,9 @@ public class MyMediaBrowserService extends MediaBrowserService {
     private ArrayList<MediaSession.QueueItem> formatToQueueItem(List<MediaItem> items) {
         ArrayList<MediaSession.QueueItem> result = new ArrayList(items.size());
         for (MediaItem item : items) {
-            result.add(new MediaSession.QueueItem(item.getDescription(), Long.valueOf(filterMediaId(item))));
+            if (item.isPlayable()){
+                result.add(new MediaSession.QueueItem(item.getDescription(), Long.valueOf(filterMediaId(item))));
+            }
         }
         return result;
     }
@@ -174,36 +177,44 @@ public class MyMediaBrowserService extends MediaBrowserService {
         Intent intent = new Intent(this, PlayingActivity.class);
         intent.putExtra("token", _session.getSessionToken());
         _session.setSessionActivity(PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT));
+        _session.getController().registerCallback(new MediaController.Callback() {
+            @Override
+            public void onMetadataChanged(@Nullable MediaMetadata metadata) {
+                super.onMetadataChanged(metadata);
+                buildNotification();
+            }
+        });
         _session.setCallback(new MediaSession.Callback() {
             @Override
             public void onPlayFromMediaId(String mediaId, Bundle extras) {
                 SongInfo songInfo = MediaMetadataDataSource.queryById(getApplicationContext(), mediaId);
                 _mediaPlayerAdapter.play(songInfo);
-                loadNotification();
+                buildNotification();
             }
 
             @Override
             public void onPause() {
                 _mediaPlayerAdapter.pause();
-                loadNotification();
+                buildNotification();
             }
 
             @Override
             public void onPlay() {
                 _mediaPlayerAdapter.play();
-                loadNotification();
+                buildNotification();
             }
 
             @Override
             public void onSkipToNext() {
                 _mediaPlayerAdapter.skipToNext();
-                loadNotification();
+                Log.i(TAG, "onSkipToNext: 去到下一曲");
+                buildNotification();
             }
 
             @Override
             public void onSkipToPrevious() {
                 _mediaPlayerAdapter.skipToPrevious();
-                loadNotification();
+                buildNotification();
             }
 
             @Override
@@ -238,7 +249,8 @@ public class MyMediaBrowserService extends MediaBrowserService {
     private static final int REQUEST_CODE = 1;
     private static final String PAUSE = "暂停", PLAY = "播放", PREV = "上一曲", NEXT = "下一曲";
 
-    public void loadNotification() {
+    private void buildNotification() {
+
         final Icon
                 ICON_PAUSE = Icon.createWithResource(this, android.R.drawable.ic_media_pause),
                 ICON_PLAY = Icon.createWithResource(this, android.R.drawable.ic_media_play),
@@ -277,7 +289,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
         }
 
 
-        Log.i(TAG, "loadNotification: 新建一个通知");
+        Log.i(TAG, "buildNotification: 新建一个通知");
         Notification notification = builder
                 .setContentTitle(title)
                 .setContentText(subtitle)
@@ -289,14 +301,15 @@ public class MyMediaBrowserService extends MediaBrowserService {
                 .addAction(actionPlayOrPause)
                 .addAction(ACTION_NEXT)
                 .setWhen(System.currentTimeMillis() - _session.getController().getPlaybackState().getPosition())
-                .setShowWhen(true)
-                .setUsesChronometer(isPlaying)
+                .setShowWhen(isPlaying)
+                .setUsesChronometer(true)
                 .setStyle(new Notification.MediaStyle().setMediaSession(_session.getSessionToken()))
                 .build();
         startForeground(1, notification);
     }
 
-    public class MyNotificationManager extends BroadcastReceiver {
+    //私有的广播管理器,集中处理通知栏操作
+    private class MyNotificationManager extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             switch (intent.getAction()) {

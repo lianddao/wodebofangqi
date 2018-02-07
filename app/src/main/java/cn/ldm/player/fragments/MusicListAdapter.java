@@ -39,7 +39,7 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
     public MusicListAdapter(Activity activity, List<MediaItem> items) {
         _activity = activity;
         mValues = items;
-        MediaController controller = ((MainActivity) _activity).getMediaController();
+        MediaController controller = _activity.getMediaController();
         if (controller == null) {
             Log.e(TAG, "MusicListAdapter: ");
         }

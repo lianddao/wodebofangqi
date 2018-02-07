@@ -56,11 +56,14 @@ public class PlayingFragment extends Fragment implements MediaSeekBar.TimeChange
         txtPlayTime = (TextView) view.findViewById(R.id.txtPlayTime);
         txtTotalTime = (TextView) view.findViewById(R.id.txtTotalTime);
         _mediaController = getActivity().getMediaController();
+
         updateUi();
+
         //region MediaController 注册回调
         _mediaController.registerCallback(new MediaController.Callback() {
             @Override
             public void onMetadataChanged(@Nullable MediaMetadata metadata) {
+                Log.i(TAG, "onMetadataChanged: " + metadata.getDescription().getTitle());
                 updateUi();
             }
 
@@ -122,7 +125,7 @@ public class PlayingFragment extends Fragment implements MediaSeekBar.TimeChange
         return view;
     }
 
-    private void updateUi(){
+    private void updateUi() {
         MediaMetadata metadata = _mediaController.getMetadata();
         _currentSong = SongInfo.make(metadata);
         imgAlbum.setImageBitmap(MusicScanner.getInstance(getActivity()).retrieveAlbumArt(_currentSong.getMediaMetadata()));
@@ -131,14 +134,11 @@ public class PlayingFragment extends Fragment implements MediaSeekBar.TimeChange
 
         seekBar.setMax((int) metadata.getLong(MediaMetadata.METADATA_KEY_DURATION));
         seekBar.setProgress((int) _mediaController.getPlaybackState().getPosition());
-        seekBar.startAnimator(seekBar.getContext(), this);
+        seekBar.startAnimator(this);
+
         imgPlayPause.setImageResource(RES_PAUSE);
         txtPlayTime.setText("0");
         txtTotalTime.setText(seekBar.getMax() + "");
-    }
-
-    private void updateNotification(){
-
     }
 
     @Override
