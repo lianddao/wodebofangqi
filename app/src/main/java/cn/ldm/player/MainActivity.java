@@ -56,6 +56,8 @@ public class MainActivity extends PermissionActivity implements MusicListFragmen
         }
     }
 
+    // TODO: 2018.02.07.0007 ①延时停止服务,②可取消的通知栏,③加入网络歌曲,④加入抽屉用于视频板块
+
     public void initAppAfterRequestPermission() {
         //region 单击事件
         imgPlayPause.setOnClickListener(new View.OnClickListener() {

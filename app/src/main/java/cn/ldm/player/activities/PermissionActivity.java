@@ -5,11 +5,12 @@ import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import java.util.ArrayList;
 
-public abstract class PermissionActivity extends Activity {
+public abstract class PermissionActivity extends AppCompatActivity {
 
     private static final String TAG = PermissionActivity.class.getSimpleName();
     private static final int REQUEST_PERMISSION_CODE = 0;

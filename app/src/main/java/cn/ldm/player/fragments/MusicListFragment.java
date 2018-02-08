@@ -48,30 +48,28 @@ public class MusicListFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_media_browser, container, false);
 
-        if (view instanceof RecyclerView) {
-            RecyclerView recyclerView = (RecyclerView) view;
+        RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.list);
 
             /*
             recyclerView.setLayoutManager(new LinearLayoutManager(context));
             或在在布局文件中使用 app:layoutManager="LinearLayoutManager"
             * */
 
-            recyclerView.setAdapter(_mediaItemAdapter);
-            recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL));
+        recyclerView.setAdapter(_mediaItemAdapter);
+        recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL));
 
-            final MediaBrowser mediaBrowser = mListener.getMediaBrowser();
-            mediaBrowser.unsubscribe(_parentMediaItem.getMediaId());
-            mediaBrowser.subscribe(_parentMediaItem.getMediaId(), new MediaBrowser.SubscriptionCallback() {
-                @Override
-                public void onChildrenLoaded(@NonNull String parentId, @NonNull List<MediaItem> children) {
-                    _mediaItems.clear();
-                    for (MediaItem item : children) {
-                        _mediaItems.add(item);
-                    }
-                    _mediaItemAdapter.notifyDataSetChanged();
+        final MediaBrowser mediaBrowser = mListener.getMediaBrowser();
+        mediaBrowser.unsubscribe(_parentMediaItem.getMediaId());
+        mediaBrowser.subscribe(_parentMediaItem.getMediaId(), new MediaBrowser.SubscriptionCallback() {
+            @Override
+            public void onChildrenLoaded(@NonNull String parentId, @NonNull List<MediaItem> children) {
+                _mediaItems.clear();
+                for (MediaItem item : children) {
+                    _mediaItems.add(item);
                 }
-            });
-        }
+                _mediaItemAdapter.notifyDataSetChanged();
+            }
+        });
         return view;
     }
 

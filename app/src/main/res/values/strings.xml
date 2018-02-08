@@ -7,4 +7,10 @@
     <string name="playlist_last_added">最后添加</string>
     <string name="playlist_recently_played">最近播放</string>
     <string name="playlist_top_tracks">最爱</string>
+    <string name="title_activity_container">Media Player</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
 </resources>
