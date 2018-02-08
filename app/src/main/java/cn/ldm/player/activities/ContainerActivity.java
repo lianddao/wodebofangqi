@@ -1,8 +1,6 @@
 package cn.ldm.player.activities;
 
-import android.app.FragmentTransaction;
 import android.content.ComponentName;
-import android.content.Intent;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
 import android.media.session.MediaController;
@@ -11,25 +9,21 @@ import android.os.Bundle;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import cn.ldm.player.MainActivity;
 import cn.ldm.player.R;
 import cn.ldm.player.core.MediaItemFactory;
 import cn.ldm.player.fragments.MusicListFragment;
-import cn.ldm.player.model.SongInfo;
 import cn.ldm.player.services.MyMediaBrowserService;
 
 public class ContainerActivity extends PermissionActivity implements NavigationView.OnNavigationItemSelectedListener, MusicListFragment
@@ -49,11 +43,6 @@ public class ContainerActivity extends PermissionActivity implements NavigationV
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_container);
-
-        if (isPermissionPassed) {
-            Log.i(TAG, "onCreate: 权限已全部取得");
-            initAppAfterRequestPermission();
-        }
 
         //region ...
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -75,9 +64,14 @@ public class ContainerActivity extends PermissionActivity implements NavigationV
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         //endregion
+
+        if (isPermissionPassed) {
+            Log.i(TAG, "onCreate: 权限已全部取得");
+            initAppAfterRequestPermission();
+        }
     }
 
     public void initAppAfterRequestPermission() {
@@ -101,6 +95,8 @@ public class ContainerActivity extends PermissionActivity implements NavigationV
                         });
                         setMediaController(mediaController);
                         //endregion
+                        Log.i(TAG, "onConnected: ");
+                        onNavigationItemSelected(navigationView.getMenu().findItem(MENU_LOCAL_MUSIC));//默认显示本地音乐
                     }
                 },
                 null
@@ -125,6 +121,7 @@ public class ContainerActivity extends PermissionActivity implements NavigationV
     protected void onStart() {
         super.onStart();
         _mediaBrowser.connect();
+        Log.i(TAG, "onStart: ");
     }
     //endregion
 
@@ -178,6 +175,7 @@ public class ContainerActivity extends PermissionActivity implements NavigationV
                         .replace(R.id.container, MusicListFragment.newInstance(MediaItemFactory.ROOT))
                         .addToBackStack(null)
                         .commit();
+                item.setChecked(true);
             }
         } else if (id == R.id.nav_gallery) {
 
