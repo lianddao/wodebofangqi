@@ -70,12 +70,11 @@
         app:layout_constraintLeft_toLeftOf="@id/txtTitle"
         app:layout_constraintTop_toBottomOf="@id/guideline2"/>
 
-
     <ImageView
         android:id="@+id/imgPlayPause"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:src="@android:drawable/ic_media_play"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:src="@mipmap/play"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toRightOf="@id/guideline1"
         app:layout_constraintRight_toLeftOf="@id/imgNext"
@@ -84,14 +83,14 @@
 
     <ImageView
         android:id="@+id/imgNext"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
         android:layout_marginLeft="10dp"
-        android:src="@android:drawable/ic_media_next"
+        android:rotation="180"
+        android:src="@mipmap/skip_to_prev"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toRightOf="@id/imgPlayPause"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
-
 
 </android.support.constraint.ConstraintLayout>

@@ -18,11 +18,13 @@
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop">
-            <!--<intent-filter>-->
-                <!--<action android:name="android.intent.action.MAIN"/>-->
 
-                <!--<category android:name="android.intent.category.LAUNCHER"/>-->
-            <!--</intent-filter>-->
+            <!-- <intent-filter> -->
+            <!-- <action android:name="android.intent.action.MAIN"/> -->
+
+
+            <!-- <category android:name="android.intent.category.LAUNCHER"/> -->
+            <!-- </intent-filter> -->
         </activity>
 
         <service android:name=".services.MyMediaBrowserService">
@@ -44,13 +46,20 @@
         </activity>
         <activity
             android:name=".activities.ContainerActivity"
-            android:label="@string/title_activity_container"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".activities.LocalMusicActivity"
+            android:label="@string/title_activity_container"
+            android:theme="@style/AppTheme.NoActionBar">
+
+        </activity>
+        <activity android:name=".activities.WebMusicActivity">
         </activity>
     </application>
 

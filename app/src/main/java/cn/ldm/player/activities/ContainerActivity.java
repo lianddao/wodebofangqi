@@ -1,10 +1,13 @@
 package cn.ldm.player.activities;
 
+import android.app.FragmentManager;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
 import android.media.session.MediaController;
 import android.media.session.PlaybackState;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
@@ -24,20 +27,26 @@ import android.view.View;
 import cn.ldm.player.R;
 import cn.ldm.player.core.MediaItemFactory;
 import cn.ldm.player.fragments.MusicListFragment;
+import cn.ldm.player.fragments.WebMusicFragment;
 import cn.ldm.player.services.MyMediaBrowserService;
 
-public class ContainerActivity extends PermissionActivity implements NavigationView.OnNavigationItemSelectedListener, MusicListFragment
-        .InteractionListener {
+public class ContainerActivity extends PermissionActivity implements NavigationView.OnNavigationItemSelectedListener,
+        MusicListFragment.InteractionListener,
+        WebMusicFragment.OnFragmentInteractionListener {
+
     private static final String TAG = ContainerActivity.class.getSimpleName();
 
-    private MediaBrowser _mediaBrowser;
+
     private static final String FRAGMENT_TAG = "fragment-tag";
-    private NavigationView navigationView;
+    protected NavigationView navigationView;
+    private MediaBrowser _mediaBrowser;
+    private MediaBrowser.MediaItem _localMusicRootMediaItem = MediaItemFactory.ROOT;
 
     @IdRes
-    private int
-            FRAGMENT_CONTAINER = R.id.container,
-            MENU_LOCAL_MUSIC = R.id.nav_local_music;
+    private int FRAGMENT_CONTAINER = R.id.container;
+
+    @IdRes
+    protected int MENU_LOCAL_MUSIC = R.id.nav_local_music;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,15 +57,6 @@ public class ContainerActivity extends PermissionActivity implements NavigationV
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -104,30 +104,15 @@ public class ContainerActivity extends PermissionActivity implements NavigationV
         //endregion
     }
 
-    private void loadLocalMusicFragment() {
-        //region 装入主片段.时机在服务连接成功之后.
-        MusicListFragment fragment = (MusicListFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
-        if (fragment == null) {
-            Log.i(TAG, "initAppAfterRequestPermission: 加入片段");
-            getFragmentManager().beginTransaction()
-                    .replace(FRAGMENT_CONTAINER, MusicListFragment.newInstance(MediaItemFactory.ROOT), FRAGMENT_TAG)
-                    .commit();
-        }
-        //endregion
-    }
-
-    //region 在 onStart() 连接媒体浏览服务
     @Override
     protected void onStart() {
         super.onStart();
-        _mediaBrowser.connect();
-        Log.i(TAG, "onStart: ");
-    }
-    //endregion
-
-    @Override
-    protected void onStop() {
-        super.onStop();
+        if (_mediaBrowser.isConnected()) {
+            Log.i(TAG, "onStart: 媒体浏览器已连接");
+        } else {
+            _mediaBrowser.connect();
+            Log.i(TAG, "onStart: 媒体浏览器开始连接");
+        }
     }
 
     @Override
@@ -162,23 +147,43 @@ public class ContainerActivity extends PermissionActivity implements NavigationV
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public MediaBrowser getMediaBrowser() {
+        return _mediaBrowser;
+    }
+
+    @Override
+    public void localMusicFragmentOnStopCall(MediaBrowser.MediaItem mediaItem) {
+        _localMusicRootMediaItem = mediaItem;
+        Log.i(TAG, "localMusicFragmentOnStopCall: " + mediaItem.getMediaId() + "," + mediaItem.getDescription().getTitle());
+    }
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
+    }
+
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
         int id = item.getItemId();
-
         if (id == R.id.nav_local_music) {
-            if (!item.isChecked()) {
-                Log.i(TAG, "onNavigationItemSelected: 获取本地音乐");
+            if (getFragmentManager().getBackStackEntryCount() > 0) {
+                getFragmentManager().popBackStackImmediate();//弹出B
+            } else if (!item.isChecked()) {
                 getFragmentManager().beginTransaction()
                         .replace(R.id.container, MusicListFragment.newInstance(MediaItemFactory.ROOT))
-                        .addToBackStack(null)
+                        //                        .addToBackStack(null)
                         .commit();
                 item.setChecked(true);
             }
-        } else if (id == R.id.nav_gallery) {
-
+        } else if (id == R.id.nav_web_music) {
+            if (!item.isChecked()) {
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.container, WebMusicFragment.newInstance())
+                        .addToBackStack(null)
+                        .commit();
+            }
         } else if (id == R.id.nav_slideshow) {
 
         } else if (id == R.id.nav_manage) {
@@ -194,9 +199,10 @@ public class ContainerActivity extends PermissionActivity implements NavigationV
         return true;
     }
 
+    private MenuItem currentMenuItem;
 
     @Override
-    public MediaBrowser getMediaBrowser() {
-        return _mediaBrowser;
+    public void localMusicFragmentONStart() {
+        navigationView.getMenu().findItem(R.id.nav_local_music).setChecked(true);
     }
 }

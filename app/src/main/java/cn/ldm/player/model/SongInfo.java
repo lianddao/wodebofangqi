@@ -1,12 +1,17 @@
 package cn.ldm.player.model;
 
 
+import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaDescription;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
 import android.net.Uri;
 import android.provider.MediaStore;
+
+import cn.ldm.player.core.MusicScanner;
 
 public class SongInfo {
 
@@ -134,5 +139,11 @@ public class SongInfo {
 
     public void setUri(Uri uri) {
         _uri = uri;
+    }
+
+    public Bitmap retrieveAlbumArt(Context context) {
+        Bitmap bitmap = MusicScanner.getInstance(context).retrieveAlbumArt(_mediaMetadata);
+        if (bitmap == null) bitmap = BitmapFactory.decodeResource(context.getResources(), android.R.drawable.ic_menu_report_image);
+        return bitmap;
     }
 }

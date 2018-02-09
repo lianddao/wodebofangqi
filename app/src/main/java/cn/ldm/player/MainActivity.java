@@ -188,5 +188,15 @@ public class MainActivity extends PermissionActivity implements MusicListFragmen
         return _mediaBrowser;
     }
 
+    @Override
+    public void localMusicFragmentOnStopCall(MediaBrowser.MediaItem mediaItem) {
+
+    }
+
+    @Override
+    public void localMusicFragmentONStart() {
+
+    }
+
     public MediaController getMediaSession() {return getMediaController();}
 }

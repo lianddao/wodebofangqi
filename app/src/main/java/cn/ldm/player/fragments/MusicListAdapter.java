@@ -2,7 +2,6 @@ package cn.ldm.player.fragments;
 
 import android.app.Activity;
 import android.app.FragmentTransaction;
-import android.content.Context;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.media.session.MediaController;
@@ -22,8 +21,8 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import cn.ldm.player.MainActivity;
 import cn.ldm.player.R;
+import cn.ldm.player.core.MusicScanner;
 import cn.ldm.player.dialog.FireMissilesDialogFragment;
 import cn.ldm.player.services.MyMediaBrowserService;
 
@@ -106,6 +105,21 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
         holder._txtTitle.setText(item.getDescription().getTitle().toString());
         holder._imgAlbum.setVisibility(View.INVISIBLE);
 
+        switch (item.getDescription().getTitle()) {
+            case "全部歌曲":
+                break;
+            case "歌手":
+                break;
+            case "专辑":
+                holder._imgAlbum.setImageResource(R.mipmap);
+                break;
+            case "播放列表":
+                holder._imgAlbum.setImageResource(R.mipmap.playlist);
+                break;
+            default:
+                break;
+        }
+
         //region holder._view.setOnClickListener
         holder._view.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -156,9 +170,10 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
 
         //region 加入当前播放指示
         MediaMetadata metadata = _activity.getMediaController().getMetadata();
-        if (metadata!=null && metadata.getDescription().getMediaId().equals(holder._view.getTag())){
+        if (metadata != null && metadata.getDescription().getMediaId().equals(holder._view.getTag())) {
             holder._imgAlbum.setVisibility(View.VISIBLE);
             holder._imgAlbum.setTag("SELECTED");
+            holder._imgAlbum.setImageBitmap(MusicScanner.getInstance(_activity).retrieveAlbumArt(metadata));
         }
         //endregion
     }
