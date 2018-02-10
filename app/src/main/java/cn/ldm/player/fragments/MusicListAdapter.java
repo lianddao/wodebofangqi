@@ -35,8 +35,18 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
     private ViewGroup _viewGroup;
     private int index = -1;
 
+    final String A;
+    final String B;
+    final String C;
+    final String D;
+
     public MusicListAdapter(Activity activity, List<MediaItem> items) {
         _activity = activity;
+        A = _activity.getResources().getString(R.string.root_by_all);
+        B = _activity.getResources().getString(R.string.root_by_artist);
+        C = _activity.getResources().getString(R.string.root_by_album);
+        D = _activity.getResources().getString(R.string.root_by_playlist);
+
         mValues = items;
         MediaController controller = _activity.getMediaController();
         if (controller == null) {
@@ -105,19 +115,19 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
         holder._txtTitle.setText(item.getDescription().getTitle().toString());
         holder._imgAlbum.setVisibility(View.INVISIBLE);
 
-        switch (item.getDescription().getTitle()) {
-            case "全部歌曲":
-                break;
-            case "歌手":
-                break;
-            case "专辑":
-                holder._imgAlbum.setImageResource(R.mipmap);
-                break;
-            case "播放列表":
-                holder._imgAlbum.setImageResource(R.mipmap.playlist);
-                break;
-            default:
-                break;
+
+        if (item.getDescription().getTitle().equals(A)) {
+            holder._imgAlbum.setImageResource(R.mipmap.offline);
+            holder._imgAlbum.setVisibility(View.VISIBLE);
+        } else if (item.getDescription().getTitle().equals(B)) {
+            holder._imgAlbum.setImageResource(R.mipmap.video_file);
+            holder._imgAlbum.setVisibility(View.VISIBLE);
+        } else if (item.getDescription().getTitle().equals(C)) {
+            holder._imgAlbum.setImageResource(R.mipmap.play);
+            holder._imgAlbum.setVisibility(View.VISIBLE);
+        } else if (item.getDescription().getTitle().equals(D)) {
+            holder._imgAlbum.setImageResource(R.mipmap.playlist);
+            holder._imgAlbum.setVisibility(View.VISIBLE);
         }
 
         //region holder._view.setOnClickListener

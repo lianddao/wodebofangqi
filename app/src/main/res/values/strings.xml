@@ -16,4 +16,10 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="fragment_title_web_music">网络音乐</string>
+
+    <!--本地音乐默认根目录-->
+    <string name="root_by_all">全部歌曲</string>
+    <string name="root_by_artist">歌手</string>
+    <string name="root_by_album">专辑</string>
+    <string name="root_by_playlist">播放列表</string>
 </resources>
