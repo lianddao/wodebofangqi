@@ -233,18 +233,20 @@ public class MyMediaBrowserService extends MediaBrowserService {
         setSessionToken(_session.getSessionToken());
         _mediaPlayerAdapter = new MediaPlayerAdapter(this, _session);
 
-        try {
-            _mediaNotificationManager = new MediaNotificationManager(this);
-            _myNotificationManager = new MyNotificationManager();
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(PAUSE);
-            filter.addAction(PLAY);
-            filter.addAction(PREV);
-            filter.addAction(NEXT);
-            MyMediaBrowserService.this.registerReceiver(_myNotificationManager, filter);
-        } catch (Exception ex) {
-        }
+//        try {
+//            _mediaNotificationManager = new MediaNotificationManager(this);
+//            _myNotificationManager = new MyNotificationManager();
+//            IntentFilter filter = new IntentFilter();
+//            filter.addAction(PAUSE);
+//            filter.addAction(PLAY);
+//            filter.addAction(PREV);
+//            filter.addAction(NEXT);
+//            MyMediaBrowserService.this.registerReceiver(_myNotificationManager, filter);
+//        } catch (Exception ex) {
+//        }
     }
+
+
 
     private static final int REQUEST_CODE = 1;
     private static final String PAUSE = "暂停", PLAY = "播放", PREV = "上一曲", NEXT = "下一曲";

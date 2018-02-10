@@ -5,14 +5,20 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.os.Handler;
+import android.os.Message;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import java.io.IOException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import cn.ldm.player.R;
+import cn.ldm.player.core.maicong.Music;
 import okhttp3.FormBody;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -49,31 +55,32 @@ public class WebMusicFragment extends Fragment {
         return fragment;
     }
 
-    AsyncTask _asyncTask;
+    GetSongAsyncTask _asyncTask;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(TAG, "onCreate: ");
         //http://www.xiami.com/chart?spm=a1z1s.2943549.6827465.1.YB4YSL
 
-        _asyncTask = new AsyncTask() {
-            @Override
-            protected Object doInBackground(Object[] objects) {
-                try {
-//                    return run("input=%E5%88%98%E5%BE%B7%E5%8D%8E&filter=name&type=xiami&page=1");
-                    return post("https://music.2333.me/?name=%E5%88%98%E5%BE%B7%E5%8D%8E&type=xiami");
-                } catch (IOException ex) {
-                    Log.e(TAG, "onCreate: " + ex.toString());
-                    return null;
-                }
-            }
 
-            @Override
-            protected void onPostExecute(Object o) {
-                Log.i(TAG, "onPostExecute: " + o.toString());
-            }
-        };
-        _asyncTask.execute();
+        //        _asyncTask.execute();
+
+
+    }
+
+
+    class GetSongAsyncTask extends AsyncTask<String, Integer, String> {
+        @Override
+        protected String doInBackground(String... strings) {
+            Music music = new Music();
+            return music.mc_get_song_by_name("a", "b", 1);
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            Log.i(TAG, "onPostExecute: " + s);
+        }
     }
 
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
@@ -90,7 +97,7 @@ public class WebMusicFragment extends Fragment {
     }
 
     String post(String url) throws IOException {
-        //        RequestBody body = RequestBody.create(JSON);
+//                RequestBody body = RequestBody.create(JSON);
         RequestBody body = new FormBody.Builder().add("input", "%E5%88%98%E5%BE%B7%E5%8D%8E")
                 .add("filter", "name")
                 .add("type", "xiami")
@@ -102,8 +109,8 @@ public class WebMusicFragment extends Fragment {
                 .addHeader(":method", "POST")
                 .addHeader(":path", "/")
                 .addHeader(":scheme", "https")
-                .addHeader("origin","https://music.2333.me")
-                .addHeader("referer","https://music.2333.me/?name=%E5%88%98%E5%BE%B7%E5%8D%8E&type=xiami")
+                .addHeader("origin", "https://music.2333.me")
+                .addHeader("referer", "https://music.2333.me/?name=%E5%88%98%E5%BE%B7%E5%8D%8E&type=xiami")
                 .post(body)
                 .build();
         Response response = client.newCall(request).execute();
@@ -112,8 +119,35 @@ public class WebMusicFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.i(TAG, "onCreateView: ");
         return inflater.inflate(R.layout.fragment_web_music, container, false);
     }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        Log.i(TAG, "onActivityCreated: ");
+//        _asyncTask = new GetSongAsyncTask();
+        //        _asyncTask.execute();
+        Executors.newCachedThreadPool().submit(new Runnable() {
+            @Override
+            public void run() {
+                Music music = new Music();
+                Message message = Message.obtain();
+                message.obj = music.mc_get_song_by_name("a", "b", 1);
+                handler.sendMessage(message);
+            }
+        });
+    }
+
+
+    Handler handler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            Log.i(TAG, "handleMessage: " + msg.toString());
+            return true;
+        }
+    });
 
     // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
