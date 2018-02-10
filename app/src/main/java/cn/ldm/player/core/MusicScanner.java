@@ -7,10 +7,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadata;
 import android.media.MediaMetadataRetriever;
+import android.media.browse.MediaBrowser;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NavUtils;
+import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -89,6 +91,23 @@ public class MusicScanner {
             mContext.getContentResolver().delete(uri, null, null);
             return null;
         }
+        retriever.setDataSource(mContext, uri);
+        byte[] albumArtData = retriever.getEmbeddedPicture();
+        retriever.release();
+        Bitmap bitmap = null;
+        if (albumArtData != null) bitmap = BitmapFactory.decodeByteArray(albumArtData, 0, albumArtData.length);
+        return bitmap;
+    }
+
+    public Bitmap retrieveAlbumArt(@NonNull String mediaId) {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+
+        Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Long.valueOf(mediaId));
+//        String musicPath = mediaItem.getDescription().getMediaUri().toString();
+//        if (!(new File(musicPath).exists())) {
+//            mContext.getContentResolver().delete(uri, null, null);
+//            return null;
+//        }
         retriever.setDataSource(mContext, uri);
         byte[] albumArtData = retriever.getEmbeddedPicture();
         retriever.release();

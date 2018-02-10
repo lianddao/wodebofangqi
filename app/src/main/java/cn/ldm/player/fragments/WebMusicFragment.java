@@ -2,13 +2,23 @@ package cn.ldm.player.fragments;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.io.IOException;
+
 import cn.ldm.player.R;
+import okhttp3.FormBody;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -20,6 +30,7 @@ import cn.ldm.player.R;
  */
 public class WebMusicFragment extends Fragment {
 
+    private static final String TAG = WebMusicFragment.class.getSimpleName();
     private OnFragmentInteractionListener mListener;
 
     public WebMusicFragment() {
@@ -38,9 +49,65 @@ public class WebMusicFragment extends Fragment {
         return fragment;
     }
 
+    AsyncTask _asyncTask;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //http://www.xiami.com/chart?spm=a1z1s.2943549.6827465.1.YB4YSL
+
+        _asyncTask = new AsyncTask() {
+            @Override
+            protected Object doInBackground(Object[] objects) {
+                try {
+//                    return run("input=%E5%88%98%E5%BE%B7%E5%8D%8E&filter=name&type=xiami&page=1");
+                    return post("https://music.2333.me/?name=%E5%88%98%E5%BE%B7%E5%8D%8E&type=xiami");
+                } catch (IOException ex) {
+                    Log.e(TAG, "onCreate: " + ex.toString());
+                    return null;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(Object o) {
+                Log.i(TAG, "onPostExecute: " + o.toString());
+            }
+        };
+        _asyncTask.execute();
+    }
+
+    public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+
+    OkHttpClient client = new OkHttpClient();
+
+    String run(String url) throws IOException {
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+
+        Response response = client.newCall(request).execute();
+        return response.body().string();
+    }
+
+    String post(String url) throws IOException {
+        //        RequestBody body = RequestBody.create(JSON);
+        RequestBody body = new FormBody.Builder().add("input", "%E5%88%98%E5%BE%B7%E5%8D%8E")
+                .add("filter", "name")
+                .add("type", "xiami")
+                .add("page", "1")
+                .build();
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader(":authority", "music.2333.me")
+                .addHeader(":method", "POST")
+                .addHeader(":path", "/")
+                .addHeader(":scheme", "https")
+                .addHeader("origin","https://music.2333.me")
+                .addHeader("referer","https://music.2333.me/?name=%E5%88%98%E5%BE%B7%E5%8D%8E&type=xiami")
+                .post(body)
+                .build();
+        Response response = client.newCall(request).execute();
+        return response.body().string();
     }
 
     @Override

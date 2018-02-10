@@ -2,6 +2,8 @@ package cn.ldm.player.fragments;
 
 import android.app.Activity;
 import android.app.FragmentTransaction;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.media.session.MediaController;
@@ -24,7 +26,10 @@ import java.util.List;
 import cn.ldm.player.R;
 import cn.ldm.player.core.MusicScanner;
 import cn.ldm.player.dialog.FireMissilesDialogFragment;
+import cn.ldm.player.model.Song;
+import cn.ldm.player.model.SongInfo;
 import cn.ldm.player.services.MyMediaBrowserService;
+import cn.ldm.player.tool.MusicTool;
 
 
 public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.ViewHolder> {
@@ -58,14 +63,14 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
             public void onMetadataChanged(@Nullable MediaMetadata metadata) {
                 View oldSelectedView = _viewGroup.findViewWithTag("SELECTED");
                 if (oldSelectedView != null) {
-                    oldSelectedView.setVisibility(View.INVISIBLE);
+//                    oldSelectedView.setVisibility(View.INVISIBLE);
                     oldSelectedView.setTag(null);
                 }
 
                 View newSelectedView = _viewGroup.findViewWithTag(metadata.getDescription().getMediaId());
                 if (newSelectedView != null) {
                     View tagView = newSelectedView.findViewById(R.id.imgCurrentTag);
-                    tagView.setVisibility(View.VISIBLE);
+//                    tagView.setVisibility(View.VISIBLE);
                     tagView.setTag("SELECTED");
                     index = _viewGroup.indexOfChild(newSelectedView);
                 }
@@ -113,41 +118,52 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
             holder._view.setTag(MyMediaBrowserService.filterMediaId(item));
         }
         holder._txtTitle.setText(item.getDescription().getTitle().toString());
-        holder._imgAlbum.setVisibility(View.INVISIBLE);
+        holder._imgAlbum.setVisibility(View.GONE);
 
 
-        if (item.getDescription().getTitle().equals(A)) {
-            holder._imgAlbum.setImageResource(R.mipmap.offline);
-            holder._imgAlbum.setVisibility(View.VISIBLE);
-        } else if (item.getDescription().getTitle().equals(B)) {
-            holder._imgAlbum.setImageResource(R.mipmap.video_file);
-            holder._imgAlbum.setVisibility(View.VISIBLE);
-        } else if (item.getDescription().getTitle().equals(C)) {
-            holder._imgAlbum.setImageResource(R.mipmap.play);
-            holder._imgAlbum.setVisibility(View.VISIBLE);
-        } else if (item.getDescription().getTitle().equals(D)) {
-            holder._imgAlbum.setImageResource(R.mipmap.playlist);
-            holder._imgAlbum.setVisibility(View.VISIBLE);
+        if (item.isBrowsable()) {
+            if (item.getDescription().getTitle().equals(A)) {
+                holder._imgAlbum.setImageResource(R.mipmap.offline);
+                holder._imgAlbum.setVisibility(View.VISIBLE);
+            } else if (item.getDescription().getTitle().equals(B)) {
+                holder._imgAlbum.setImageResource(R.mipmap.video_file);
+                holder._imgAlbum.setVisibility(View.VISIBLE);
+            } else if (item.getDescription().getTitle().equals(C)) {
+                holder._imgAlbum.setImageResource(R.mipmap.play);
+                holder._imgAlbum.setVisibility(View.VISIBLE);
+            } else if (item.getDescription().getTitle().equals(D)) {
+                holder._imgAlbum.setImageResource(R.mipmap.playlist);
+                holder._imgAlbum.setVisibility(View.VISIBLE);
+            }
+        } else {
+            String mediaId = MyMediaBrowserService.filterMediaId(item);
+            Bitmap bitmap = MusicScanner.getInstance(_activity).retrieveAlbumArt(mediaId);
+            if (bitmap != null) {
+                holder._imgAlbum.setImageBitmap(bitmap);
+                holder._imgAlbum.setVisibility(View.VISIBLE);
+            } else {
+                holder._imgAlbum.setImageResource(R.mipmap.offline);
+                holder._imgAlbum.setVisibility(View.VISIBLE);
+            }
         }
+
 
         //region holder._view.setOnClickListener
         holder._view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (holder.mMediaItem.isPlayable()) {
-                    //                    if (index > -1) {
-                    //                        View oldSelectedView = _viewGroup.findViewWithTag("SELECTED");
-                    //                        if (oldSelectedView != null) {
-                    //                            oldSelectedView.setVisibility(View.INVISIBLE);
-                    //                            oldSelectedView.setTag(null);
-                    //                        } else {
-                    //                            Log.i(TAG, "onClick: 旧视图已在屏幕之外");
-                    //                        }
-                    //                    }
-                    //                    index = position;
-                    //                    holder._imgAlbum.setVisibility(View.VISIBLE);
-                    //                    holder._imgAlbum.setTag("SELECTED");
+//                    if (index > -1) {
+//                        View oldSelectedView = _viewGroup.findViewWithTag("SELECTED");
+//                        if (oldSelectedView != null) {
+//                            oldSelectedView.setVisibility(View.INVISIBLE);
+//                            oldSelectedView.setTag(null);
+//                        } else {
+//                            Log.i(TAG, "onClick: 旧视图已在屏幕之外");
+//                        }
+//                    }
                     index = position;
+//                    holder._imgAlbum.setVisibility(View.VISIBLE);
                     String mediaId = MyMediaBrowserService.filterMediaId(holder.mMediaItem.getMediaId());
                     _activity.getMediaController().getTransportControls().playFromMediaId(mediaId, null);
                 } else {
@@ -181,9 +197,9 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
         //region 加入当前播放指示
         MediaMetadata metadata = _activity.getMediaController().getMetadata();
         if (metadata != null && metadata.getDescription().getMediaId().equals(holder._view.getTag())) {
-            holder._imgAlbum.setVisibility(View.VISIBLE);
+            Log.i(TAG, "onBindViewHolder: 加入当前播放指示");
+            //            holder._imgAlbum.setVisibility(View.VISIBLE);
             holder._imgAlbum.setTag("SELECTED");
-            holder._imgAlbum.setImageBitmap(MusicScanner.getInstance(_activity).retrieveAlbumArt(metadata));
         }
         //endregion
     }
