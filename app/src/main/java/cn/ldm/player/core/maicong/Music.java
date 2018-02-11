@@ -5,7 +5,13 @@ import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
 
 import okhttp3.FormBody;
 import okhttp3.MediaType;
@@ -54,29 +60,30 @@ public class Music {
 
     public String mc_curl(String... args) {
         try {
-            JSONObject jsonObject = new JSONObject(args[0]);
-            String url = jsonObject.getJSONObject("xiami").getString("url");
-            String referer = jsonObject.getJSONObject("xiami").getString("referer");
-            String agent = jsonObject.getJSONObject("xiami").getString("user-agent");
-            String body = jsonObject.getJSONObject("xiami").getString("body");
+                        JSONObject jsonObject = new JSONObject(args[0]);
+                        String url = jsonObject.getJSONObject("xiami").getString("url");
+                        String referer = jsonObject.getJSONObject("xiami").getString("referer");
+                        String agent = jsonObject.getJSONObject("xiami").getString("user-agent");
+                        String body = jsonObject.getJSONObject("xiami").getString("body");
 
-            RequestBody requestBody = new FormBody.Builder()
-                    .add("keyword", "abc")
-                    .add("format", "json")
-                    .add("page","0")
-                    .add("pagesize","10")
-                    .build();
-//            requestBody = RequestBody.create(JSON, body);
-            Request request = new Request.Builder()
-                    .url("http://mobilecdn.kugou.com/api/v3/search/song")
-                    .addHeader("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36")
-                    .addHeader("referer", "http://m.kugou.com/v2/static/html/search.html")
-                    .addHeader("proxy", "false")
-                    .addHeader("X-Requested-With", "XMLHttpRequest")
-                    .post(requestBody)
-                    .build();
-            Response response = client.newCall(request).execute();
-            return response.body().string();
+                        RequestBody requestBody = new FormBody.Builder()
+                                .add("keyword", "abc")
+                                .add("format", "json")
+                                .add("page","1")
+                                .add("pagesize","10")
+                                .build();
+            //            requestBody = RequestBody.create(JSON, body);
+                        Request request = new Request.Builder()
+                                .url("http://mobilecdn.kugou.com/api/v3/search/song?keyword=abc&format=json&page=1&pagesize=10")
+                                .addHeader("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36")
+                                .addHeader("referer", "http://m.kugou.com/v2/static/html/search.html")
+                                .addHeader("proxy", "false")
+                                .addHeader("X-Requested-With", "XMLHttpRequest")
+//                                .post(requestBody)
+                                .build();
+                        Response response = client.newCall(request).execute();
+                        return response.body().string();
+
         } catch (Exception ex) {
             Log.e(TAG, "mc_curl: " + ex.toString());
             return null;

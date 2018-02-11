@@ -13,6 +13,7 @@ import android.media.browse.MediaBrowser.MediaItem;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -84,8 +85,8 @@ public class MyMediaBrowserService extends MediaBrowserService {
             case MEDIA_ID_MUSIC_BY_TITLE:
                 Log.i(TAG, "根据 '__BY_TITLE__' 组织数据");
                 mediaItems.addAll(MediaItemDataSource.getSongsByTitleFlag(this));
-//                _session.setQueue(formatToQueueItem(mediaItems));
-//                _session.setQueueTitle("根据 '__BY_TITLE__' 组织数据");
+                //                _session.setQueue(formatToQueueItem(mediaItems));
+                //                _session.setQueueTitle("根据 '__BY_TITLE__' 组织数据");
                 break;
             case MEDIA_ID_MUSIC_BY_ALBUM:
                 Log.i(TAG, "根据 '__BY_ALBUM__' 组织数据");
@@ -155,7 +156,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
     private ArrayList<MediaSession.QueueItem> formatToQueueItem(List<MediaItem> items) {
         ArrayList<MediaSession.QueueItem> result = new ArrayList(items.size());
         for (MediaItem item : items) {
-            if (item.isPlayable()){
+            if (item.isPlayable()) {
                 result.add(new MediaSession.QueueItem(item.getDescription(), Long.valueOf(filterMediaId(item))));
             }
         }
@@ -227,25 +228,35 @@ public class MyMediaBrowserService extends MediaBrowserService {
                 super.onSkipToQueueItem(id);
                 Log.i(TAG, "onSkipToQueueItem: ");
             }
+
+            @Override
+            public void onPrepareFromUri(Uri uri, Bundle extras) {
+                super.onPrepareFromUri(uri, extras);
+                Log.i(TAG, "onPrepareFromUri: ");
+            }
+
+            @Override
+            public void onPlayFromUri(Uri uri, Bundle extras) {
+                _mediaPlayerAdapter.playFromUri(uri, null);
+            }
         });
         //endregion
 
         setSessionToken(_session.getSessionToken());
         _mediaPlayerAdapter = new MediaPlayerAdapter(this, _session);
 
-//        try {
-//            _mediaNotificationManager = new MediaNotificationManager(this);
-//            _myNotificationManager = new MyNotificationManager();
-//            IntentFilter filter = new IntentFilter();
-//            filter.addAction(PAUSE);
-//            filter.addAction(PLAY);
-//            filter.addAction(PREV);
-//            filter.addAction(NEXT);
-//            MyMediaBrowserService.this.registerReceiver(_myNotificationManager, filter);
-//        } catch (Exception ex) {
-//        }
+        //        try {
+        //            _mediaNotificationManager = new MediaNotificationManager(this);
+        //            _myNotificationManager = new MyNotificationManager();
+        //            IntentFilter filter = new IntentFilter();
+        //            filter.addAction(PAUSE);
+        //            filter.addAction(PLAY);
+        //            filter.addAction(PREV);
+        //            filter.addAction(NEXT);
+        //            MyMediaBrowserService.this.registerReceiver(_myNotificationManager, filter);
+        //        } catch (Exception ex) {
+        //        }
     }
-
 
 
     private static final int REQUEST_CODE = 1;

@@ -141,35 +141,37 @@ public class MusicListFragment extends Fragment {
 
         //region 注册媒体控制器回调
         _mediaController = getActivity().getMediaController();
-        _mediaController.registerCallback(new MediaController.Callback() {
-            @Override
-            public void onMetadataChanged(@Nullable MediaMetadata metadata) {
-                Log.i(TAG, "onMetadataChanged: ");
-                SongInfo songInfo = SongInfo.make(metadata);
-                txtTitle.setText(songInfo.getTitle());
-                txtSubtitle.setText(songInfo.getSubtitle());
-                imgAlbum.setImageBitmap(songInfo.retrieveAlbumArt(getActivity()));
-            }
-
-            @Override
-            public void onPlaybackStateChanged(@NonNull PlaybackState state) {
-                switch (state.getState()) {
-                    case PlaybackState.STATE_PAUSED:
-                        imgPlayPause.setImageResource(RES_IMG_PLAYING);
-                        break;
-                    case PlaybackState.STATE_PLAYING:
-                        imgPlayPause.setImageResource(RES_IMG_PAUSE);
-                        break;
-                    default:
-                        imgPlayPause.setImageResource(RES_IMG_PLAYING);
-                        break;
-                }
-            }
-        });
+        _mediaController.registerCallback(_callback);
         //endregion
 
         return view;
     }
+
+    private final MediaController.Callback _callback = new MediaController.Callback() {
+        @Override
+        public void onMetadataChanged(@Nullable MediaMetadata metadata) {
+            Log.i(TAG, "onMetadataChanged: ");
+            SongInfo songInfo = SongInfo.make(metadata);
+            txtTitle.setText(songInfo.getTitle());
+            txtSubtitle.setText(songInfo.getSubtitle());
+            imgAlbum.setImageBitmap(songInfo.retrieveAlbumArt(getActivity()));
+        }
+
+        @Override
+        public void onPlaybackStateChanged(@NonNull PlaybackState state) {
+            switch (state.getState()) {
+                case PlaybackState.STATE_PAUSED:
+                    imgPlayPause.setImageResource(RES_IMG_PLAYING);
+                    break;
+                case PlaybackState.STATE_PLAYING:
+                    imgPlayPause.setImageResource(RES_IMG_PAUSE);
+                    break;
+                default:
+                    imgPlayPause.setImageResource(RES_IMG_PLAYING);
+                    break;
+            }
+        }
+    };
 
     @Override
     public void onStart() {
@@ -182,6 +184,7 @@ public class MusicListFragment extends Fragment {
         super.onStop();
         Log.i(TAG, "onStop: ");
         mListener.localMusicFragmentOnStopCall(_parentMediaItem);
+        _mediaController.unregisterCallback(_callback);
     }
 
     @Override
@@ -212,6 +215,7 @@ public class MusicListFragment extends Fragment {
         MediaBrowser getMediaBrowser();
 
         void localMusicFragmentOnStopCall(MediaItem mediaItem);
+
         void localMusicFragmentONStart();
     }
 }

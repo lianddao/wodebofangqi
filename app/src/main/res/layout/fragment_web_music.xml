@@ -1,14 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:app="http://schemas.android.com/apk/res-auto"
              xmlns:tools="http://schemas.android.com/tools"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
-             tools:context="cn.ldm.player.fragments.WebMusicFragment">
+    >
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/list"
+        android:name="cn.ldm.player.fragments.MediaBrowserFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:text="@string/fragment_title_web_music"/>
+        android:layout_marginBottom="100dp"
+        app:layoutManager="LinearLayoutManager"
+        tools:context="cn.ldm.player.fragments.MusicListFragment"
+        tools:listitem="@layout/fragment_media_browser_item"/>
 
+    <include
+        layout="@layout/bottom_playing"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_gravity="bottom"/>
 </FrameLayout>
+

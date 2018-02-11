@@ -7,6 +7,8 @@ import android.media.MediaMetadata;
 import android.media.MediaPlayer;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
+import android.net.Uri;
+import android.os.Bundle;
 import android.util.Log;
 
 import java.util.List;
@@ -59,6 +61,14 @@ public class MediaPlayerAdapter {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
                     Log.i(TAG, "onPrepared: 播放器准备就绪");
+                    mp.start();
+                    MediaMetadata metadata = new MediaMetadata.Builder().putString(MediaMetadata.METADATA_KEY_MEDIA_ID, "adsf")
+                            .putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, "LDM")
+                            .build();
+                    _mediaSession.setMetadata(metadata);
+                    _mediaSession.setPlaybackState(
+                            _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, 0, PLAYBACK_SPEED).build()
+                    );
                 }
             });
         }
@@ -195,6 +205,15 @@ public class MediaPlayerAdapter {
         }
         MediaSession.QueueItem queueItem = queueItems.get(prevIndex);
         play(queueItem);
+    }
+
+    public void playFromUri(Uri uri, Bundle extras) {
+        initializeMediaPlayer();
+        try {
+            _mediaPlayer.setDataSource(_context, uri);
+            _mediaPlayer.prepareAsync();
+        } catch (Exception ex) {
+        }
     }
 
     public static String _filterMediaId(String mediaId) {
