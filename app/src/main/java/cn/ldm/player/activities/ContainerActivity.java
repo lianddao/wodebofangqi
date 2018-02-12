@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
 import android.media.session.MediaController;
+import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Bundle;
@@ -23,6 +24,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+
+import java.util.List;
 
 import cn.ldm.player.R;
 import cn.ldm.player.core.MediaItemFactory;
@@ -91,6 +94,11 @@ public class ContainerActivity extends PermissionActivity implements NavigationV
                             @Override
                             public void onPlaybackStateChanged(@NonNull PlaybackState state) {
                                 //                                updateUiState();
+                            }
+
+                            @Override
+                            public void onQueueChanged(@Nullable List<MediaSession.QueueItem> queue) {
+                                Log.i(TAG, "onQueueChanged: ");
                             }
                         });
                         setMediaController(mediaController);

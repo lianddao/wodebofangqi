@@ -269,7 +269,7 @@ public class MediaNotificationManager extends BroadcastReceiver {
 
         MediaDescription description = mMetadata.getDescription();
 
-
+        Log.i(TAG, "createNotification: 创建通知");
         notificationBuilder
                 .setStyle(new Notification.MediaStyle()
                         .setShowActionsInCompactView(

@@ -57,18 +57,23 @@ public class MediaPlayerAdapter {
                     skipToNext();
                 }
             });
+
             _mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
-                    Log.i(TAG, "onPrepared: 播放器准备就绪");
+                    Log.i(TAG, "onPrepared: 元数据准备就绪");
                     mp.start();
-                    MediaMetadata metadata = new MediaMetadata.Builder().putString(MediaMetadata.METADATA_KEY_MEDIA_ID, "adsf")
-                            .putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, "LDM")
-                            .build();
-                    _mediaSession.setMetadata(metadata);
+                    _mediaSession.setMetadata(_bufferMedia);
                     _mediaSession.setPlaybackState(
                             _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, 0, PLAYBACK_SPEED).build()
                     );
+                }
+            });
+
+            _mediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
+                @Override
+                public void onBufferingUpdate(MediaPlayer mp, int percent) {
+                    Log.i(TAG, "当前缓冲进度: " + percent);
                 }
             });
         }
@@ -212,9 +217,14 @@ public class MediaPlayerAdapter {
         try {
             _mediaPlayer.setDataSource(_context, uri);
             _mediaPlayer.prepareAsync();
+            if (extras!=null){
+                _bufferMedia=(MediaMetadata)extras.getParcelable("song");
+            }
         } catch (Exception ex) {
         }
     }
+
+    private MediaMetadata _bufferMedia;
 
     public static String _filterMediaId(String mediaId) {
         String[] split = mediaId.split(String.valueOf(LEAF_SEPARATOR));

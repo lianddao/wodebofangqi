@@ -1,19 +1,26 @@
 package cn.ldm.player.core.maicong;
 
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaDescription;
+import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
 import android.os.AsyncTask;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -23,12 +30,55 @@ public class KuGou {
     private static final String TAG = KuGou.class.getSimpleName();
     private Callback _callback;
 
-    public KuGou(){}
+    public KuGou() {}
 
     public KuGou(Callback callback) {
         _callback = callback;
         KuGouAsyncTask asyncTask = new KuGouAsyncTask();
         asyncTask.execute();
+    }
+
+    public static MediaMetadata resolve(Context context, final String json) {
+        Future<MediaMetadata> future = Executors.newCachedThreadPool().submit(new Callable<MediaMetadata>() {
+            @Override
+            public MediaMetadata call() throws Exception {
+                JSONObject jo = new JSONObject(json);
+                try {
+                    String id = jo.getString("hash");
+                    String title = jo.getString("songName");
+                    String artist = jo.getString("singerName");
+                    String album = jo.getString("albumid");
+                    String data = jo.getString("url");
+                    String albumArt = jo.getString("album_img").replace("{size}","150");
+
+                    OkHttpClient okHttpClient = new OkHttpClient();
+                    Request request = new Request.Builder().url(albumArt).build();
+                    Response response = okHttpClient.newCall(request).execute();
+                    Bitmap bitmap = BitmapFactory.decodeStream(response.body().byteStream());
+
+                    MediaMetadata metadata = new MediaMetadata.Builder()
+                            .putString(MediaMetadata.METADATA_KEY_MEDIA_ID, id)
+                            .putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, title)
+                            .putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, artist)
+                            .putString(MediaMetadata.METADATA_KEY_ALBUM, album)
+                            .putString(MediaMetadata.METADATA_KEY_ARTIST, artist)
+                            .putString(MediaMetadata.METADATA_KEY_ART_URI,data)
+                            .putLong(MediaMetadata.METADATA_KEY_DURATION, Long.valueOf(jo.getLong("time")))
+                            .putBitmap(MediaMetadata.METADATA_KEY_ART, bitmap)
+                            .build();
+                    return metadata;
+                } catch (JSONException ex) {
+                    return null;
+                }
+            }
+        });
+
+        try {
+            MediaMetadata result = future.get();
+            return result;
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     public void getSongById(String id, final Callback callback) {

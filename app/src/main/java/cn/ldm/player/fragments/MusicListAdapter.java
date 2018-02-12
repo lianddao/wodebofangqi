@@ -97,7 +97,7 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
 
             @Override
             public void onQueueChanged(@Nullable List<MediaSession.QueueItem> queue) {
-                super.onQueueChanged(queue);
+                Log.i(TAG, "onQueueChanged: "+_activity.getMediaController().getSessionToken());
             }
         });
     }

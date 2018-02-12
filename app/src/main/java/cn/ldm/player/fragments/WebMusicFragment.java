@@ -2,9 +2,13 @@ package cn.ldm.player.fragments;
 
 import android.app.Fragment;
 import android.content.Context;
+import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
+import android.media.session.MediaController;
+import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.RecyclerView;
@@ -12,6 +16,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -29,6 +35,8 @@ public class WebMusicFragment extends Fragment {
     private RecyclerView recyclerView;
     private WebMusicListAdapter _mediaItemAdapter;
     private List<MediaBrowser.MediaItem> _mediaItems;
+    private ImageView imgAlbum;
+    private TextView txtTitle, txtSubtitle;
 
     public WebMusicFragment() {
     }
@@ -48,6 +56,9 @@ public class WebMusicFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_web_music, container, false);
+        imgAlbum = (ImageView) view.findViewById(R.id.imgAlbum);
+        txtTitle = (TextView) view.findViewById(R.id.txtTitle);
+        txtSubtitle = (TextView) view.findViewById(R.id.txtSubtitle);
         recyclerView = (RecyclerView) view.findViewById(R.id.list);
         recyclerView.setAdapter(_mediaItemAdapter);
         recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL));
@@ -57,6 +68,19 @@ public class WebMusicFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        getActivity().getMediaController().registerCallback(new MediaController.Callback() {
+            @Override
+            public void onMetadataChanged(@Nullable MediaMetadata metadata) {
+                imgAlbum.setImageBitmap(metadata.getBitmap(MediaMetadata.METADATA_KEY_ART));
+                txtTitle.setText(metadata.getDescription().getTitle());
+                txtSubtitle.setText(metadata.getDescription().getSubtitle());
+            }
+
+            @Override
+            public void onPlaybackStateChanged(@NonNull PlaybackState state) {
+                Log.i(TAG, "onPlaybackStateChanged: ");
+            }
+        });
         new KuGou(new KuGou.Callback() {
             @Override
             public void onPostExecute(Object result) {
@@ -106,6 +130,7 @@ public class WebMusicFragment extends Fragment {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
+
         MediaBrowser getMediaBrowser();
     }
 }

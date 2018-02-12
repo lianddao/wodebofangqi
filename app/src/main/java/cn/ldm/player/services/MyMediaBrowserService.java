@@ -1,11 +1,14 @@
 package cn.ldm.player.services;
 
+import android.app.Activity;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Icon;
 import android.media.MediaDescription;
 import android.media.MediaMetadata;
@@ -25,6 +28,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.ldm.player.R;
 import cn.ldm.player.activities.PlayingActivity;
 import cn.ldm.player.core.MusicMetadataDataSource;
 import cn.ldm.player.core.MusicScanner;
@@ -41,6 +45,23 @@ import cn.ldm.player.player.MediaPlayerAdapter;
  * 我的媒体浏览服务
  */
 public class MyMediaBrowserService extends MediaBrowserService {
+
+    private static MyMediaBrowserService instance;
+
+    public static MyMediaBrowserService getRunningInstance() {
+        if (instance == null) {
+            throw new RuntimeException("服务尚未创建");
+        }
+        return instance;
+    }
+
+    public MediaSession getSession() {
+        return instance._session;
+    }
+
+    public MyMediaBrowserService() {
+    }
+
 
     private static final String TAG = MyMediaBrowserService.class.getSimpleName();
     private static final String MEDIA_ID_ROOT = "__ROOT__";
@@ -59,6 +80,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
     private MediaSession _session;
 
     private List<MediaItem> mediaItems = new ArrayList<>();
+
 
     //region 当运行mediaBrowser.subscribe(..)时,才运行
     @Nullable
@@ -167,10 +189,40 @@ public class MyMediaBrowserService extends MediaBrowserService {
 
     private MyNotificationManager _myNotificationManager;
 
+    private static final PlaybackState.Builder _playbackStateBuilder = new PlaybackState.Builder();
+
+
+    /**
+     * 设置当前哪些音乐在会话中.(告知整个框架的各方，目前有哪些音乐可以播放)
+     *
+     * @param queueItems
+     * @return
+     */
+    public List<MediaSession.QueueItem> setQueue(List<MediaSession.QueueItem> queueItems) {
+        if (_session.getController().getQueue() == null) {
+            Log.i(TAG, "setQueue: 一开始队列为 null");
+        }
+        _session.setQueue(queueItems);
+        return _session.getController().getQueue();
+    }
+
+    public List<MediaSession.QueueItem> addToQueue(List<MediaSession.QueueItem> queueItems) {
+        _session.getController().getQueue().addAll(queueItems);
+        Log.i(TAG, "addToQueue: 检测是否可以触发 onQueueChanged");
+        return _session.getController().getQueue();
+    }
+
+    public void clearQueue() {
+        _session.getController().getQueue().clear();
+        //        _session.setQueue(null);
+    }
+
 
     @Override
     public void onCreate() {
         super.onCreate();
+
+        instance = this;
 
         //region 设置 MediaSession 字段
         _session = new MediaSession(this, TAG);
@@ -237,25 +289,30 @@ public class MyMediaBrowserService extends MediaBrowserService {
 
             @Override
             public void onPlayFromUri(Uri uri, Bundle extras) {
-                _mediaPlayerAdapter.playFromUri(uri, null);
+                _session.setMetadata((MediaMetadata) extras.getParcelable("song"));
+                _session.setPlaybackState(
+                        _playbackStateBuilder.setState(PlaybackState.STATE_BUFFERING, -1, PLAYBACK_SPEED).build()
+                );
+                _mediaPlayerAdapter.playFromUri(uri, extras);
             }
+
         });
         //endregion
 
         setSessionToken(_session.getSessionToken());
         _mediaPlayerAdapter = new MediaPlayerAdapter(this, _session);
 
-        //        try {
-        //            _mediaNotificationManager = new MediaNotificationManager(this);
-        //            _myNotificationManager = new MyNotificationManager();
-        //            IntentFilter filter = new IntentFilter();
-        //            filter.addAction(PAUSE);
-        //            filter.addAction(PLAY);
-        //            filter.addAction(PREV);
-        //            filter.addAction(NEXT);
-        //            MyMediaBrowserService.this.registerReceiver(_myNotificationManager, filter);
-        //        } catch (Exception ex) {
-        //        }
+        try {
+            _mediaNotificationManager = new MediaNotificationManager(this);
+            _myNotificationManager = new MyNotificationManager();
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(PAUSE);
+            filter.addAction(PLAY);
+            filter.addAction(PREV);
+            filter.addAction(NEXT);
+            MyMediaBrowserService.this.registerReceiver(_myNotificationManager, filter);
+        } catch (Exception ex) {
+        }
     }
 
 
@@ -303,11 +360,20 @@ public class MyMediaBrowserService extends MediaBrowserService {
 
 
         Log.i(TAG, "buildNotification: 新建一个通知");
+
+        Bitmap bitmap;
+        try {
+            bitmap = MusicScanner.getInstance(this).retrieveAlbumArt(metadata);
+        } catch (Exception ex) {
+            Log.i(TAG, "buildNotification: " + ex.toString());
+            bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.offline);
+        }
+
         Notification notification = builder
                 .setContentTitle(title)
                 .setContentText(subtitle)
                 .setSmallIcon(android.R.drawable.ic_menu_directions)//通知栏顶部的图片
-                .setLargeIcon(MusicScanner.getInstance(this).retrieveAlbumArt(metadata))//展开通知栏所展示的图片
+                .setLargeIcon(bitmap)//展开通知栏所展示的图片
                 .setContentIntent(createContentIntent(metadata.getDescription()))
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .addAction(ACTION_PREV)
