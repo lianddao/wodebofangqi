@@ -289,11 +289,13 @@ public class MyMediaBrowserService extends MediaBrowserService {
 
             @Override
             public void onPlayFromUri(Uri uri, Bundle extras) {
-                _session.setMetadata((MediaMetadata) extras.getParcelable("song"));
+                MediaMetadata metadata=(MediaMetadata) extras.getParcelable("song");
+                _session.setMetadata(metadata);
                 _session.setPlaybackState(
-                        _playbackStateBuilder.setState(PlaybackState.STATE_BUFFERING, -1, PLAYBACK_SPEED).build()
-                );
-                _mediaPlayerAdapter.playFromUri(uri, extras);
+                        _playbackStateBuilder.setState(PlaybackState.STATE_BUFFERING, -1, PLAYBACK_SPEED)
+                                .setActiveQueueItemId()
+                                .build()
+                );_mediaPlayerAdapter.playFromUri(uri, extras);
             }
 
         });
