@@ -1,6 +1,5 @@
 package cn.ldm.player.services;
 
-import android.app.Activity;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -33,11 +32,9 @@ import cn.ldm.player.activities.PlayingActivity;
 import cn.ldm.player.core.MusicMetadataDataSource;
 import cn.ldm.player.core.MusicScanner;
 import cn.ldm.player.datasource.MediaItemDataSource;
-import cn.ldm.player.datasource.MediaMetadataDataSource;
 import cn.ldm.player.loader.PlaylistLoader;
 import cn.ldm.player.model.Playlist;
 import cn.ldm.player.model.Song;
-import cn.ldm.player.model.SongInfo;
 import cn.ldm.player.player.MediaPlayerAdapter;
 
 
@@ -55,8 +52,27 @@ public class MyMediaBrowserService extends MediaBrowserService {
         return instance;
     }
 
+    //能正确返回 '网络歌曲' 的持续时间长度
+    public int getDuration() {
+        return _mediaPlayerAdapter.getDuration();
+    }
+
     public MediaSession getSession() {
         return instance._session;
+    }
+
+    public void setCurrentMediaMetadata(MediaMetadata mediaMetadata, int playbackState) {
+        _session.setMetadata(mediaMetadata);
+        switch (playbackState) {
+            case PlaybackState.STATE_BUFFERING:
+                //                _playbackStateBuilder.setState(playbackState,-1,PLAYBACK_SPEED)
+                //                        .setActions(ACTION)
+                break;
+        }
+    }
+
+    public MediaMetadata getCurrentMediaMetadata() {
+        return _session.getController().getMetadata();
     }
 
     public MyMediaBrowserService() {
@@ -217,6 +233,61 @@ public class MyMediaBrowserService extends MediaBrowserService {
         //        _session.setQueue(null);
     }
 
+    private MediaSession.Callback myMediaSessionCallback = new MediaSession.Callback() {
+        @Override
+        public void onPlayFromMediaId(String mediaId, Bundle extras) {
+            Log.i(TAG, "onPlayFromMediaId: 本地播放" + mediaId);
+            _mediaPlayerAdapter.local_play(mediaId);
+            buildNotification();
+        }
+
+        @Override
+        public void onPause() {
+            _mediaPlayerAdapter.pause();
+            buildNotification();
+        }
+
+        @Override
+        public void onPlay() {
+            _mediaPlayerAdapter.play();
+            buildNotification();
+        }
+
+        @Override
+        public void onSkipToNext() {
+            _mediaPlayerAdapter.skipToNext();
+            buildNotification();
+        }
+
+        @Override
+        public void onSkipToPrevious() {
+            _mediaPlayerAdapter.skipToPrevious();
+            buildNotification();
+        }
+
+        @Override
+        public void onSeekTo(long pos) {
+            _mediaPlayerAdapter.seekTo((int) pos);
+        }
+
+        @Override
+        public void onSkipToQueueItem(long id) {
+            super.onSkipToQueueItem(id);
+            Log.i(TAG, "onSkipToQueueItem: ");
+        }
+
+        //        @Override
+        //        public void onPrepareFromUri(Uri uri, Bundle extras) {
+        //            super.onPrepareFromUri(uri, extras);
+        //            Log.i(TAG, "onPrepareFromUri: ");
+        //        }
+
+        @Override
+        public void onPlayFromUri(Uri uri, Bundle extras) {
+            _mediaPlayerAdapter.playFromUri(uri, extras);
+        }
+    };
+
 
     @Override
     public void onCreate() {
@@ -237,68 +308,7 @@ public class MyMediaBrowserService extends MediaBrowserService {
                 buildNotification();
             }
         });
-        _session.setCallback(new MediaSession.Callback() {
-            @Override
-            public void onPlayFromMediaId(String mediaId, Bundle extras) {
-                SongInfo songInfo = MediaMetadataDataSource.queryById(getApplicationContext(), mediaId);
-                _mediaPlayerAdapter.play(songInfo);
-                buildNotification();
-            }
-
-            @Override
-            public void onPause() {
-                _mediaPlayerAdapter.pause();
-                buildNotification();
-            }
-
-            @Override
-            public void onPlay() {
-                _mediaPlayerAdapter.play();
-                buildNotification();
-            }
-
-            @Override
-            public void onSkipToNext() {
-                _mediaPlayerAdapter.skipToNext();
-                Log.i(TAG, "onSkipToNext: 去到下一曲");
-                buildNotification();
-            }
-
-            @Override
-            public void onSkipToPrevious() {
-                _mediaPlayerAdapter.skipToPrevious();
-                buildNotification();
-            }
-
-            @Override
-            public void onSeekTo(long pos) {
-                _mediaPlayerAdapter.seekTo((int) pos);
-            }
-
-            @Override
-            public void onSkipToQueueItem(long id) {
-                super.onSkipToQueueItem(id);
-                Log.i(TAG, "onSkipToQueueItem: ");
-            }
-
-            @Override
-            public void onPrepareFromUri(Uri uri, Bundle extras) {
-                super.onPrepareFromUri(uri, extras);
-                Log.i(TAG, "onPrepareFromUri: ");
-            }
-
-            @Override
-            public void onPlayFromUri(Uri uri, Bundle extras) {
-                MediaMetadata metadata=(MediaMetadata) extras.getParcelable("song");
-                _session.setMetadata(metadata);
-                _session.setPlaybackState(
-                        _playbackStateBuilder.setState(PlaybackState.STATE_BUFFERING, -1, PLAYBACK_SPEED)
-                                .setActiveQueueItemId()
-                                .build()
-                );_mediaPlayerAdapter.playFromUri(uri, extras);
-            }
-
-        });
+        _session.setCallback(myMediaSessionCallback);
         //endregion
 
         setSessionToken(_session.getSessionToken());
@@ -317,6 +327,16 @@ public class MyMediaBrowserService extends MediaBrowserService {
         }
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.i(TAG, "onDestroy: ");
+        if (_session.isActive()){
+            Log.i(TAG, "onDestroy: 会话在后台活动");
+        }else {
+            unregisterReceiver(_myNotificationManager);
+        }
+    }
 
     private static final int REQUEST_CODE = 1;
     private static final String PAUSE = "暂停", PLAY = "播放", PREV = "上一曲", NEXT = "下一曲";
@@ -368,7 +388,10 @@ public class MyMediaBrowserService extends MediaBrowserService {
             bitmap = MusicScanner.getInstance(this).retrieveAlbumArt(metadata);
         } catch (Exception ex) {
             Log.i(TAG, "buildNotification: " + ex.toString());
-            bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.offline);
+            bitmap=metadata.getBitmap(MediaMetadata.METADATA_KEY_ART);
+            if (bitmap==null){
+                bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.offline);
+            }
         }
 
         Notification notification = builder

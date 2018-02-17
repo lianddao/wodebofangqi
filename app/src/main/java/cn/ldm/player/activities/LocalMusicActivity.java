@@ -1,6 +1,5 @@
 package cn.ldm.player.activities;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
@@ -10,17 +9,16 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.NavigationView;
 import android.util.Log;
 
 import cn.ldm.player.core.MediaItemFactory;
-import cn.ldm.player.fragments.MusicListFragment;
+import cn.ldm.player.fragments.LocalMusicListFragment;
 import cn.ldm.player.fragments.WebMusicFragment;
 import cn.ldm.player.services.MyMediaBrowserService;
 
 public class LocalMusicActivity extends ContainerActivity
         implements
-        MusicListFragment.InteractionListener,
+        LocalMusicListFragment.InteractionListener,
         WebMusicFragment.OnFragmentInteractionListener {
 
     private static final String TAG = LocalMusicActivity.class.getSimpleName();

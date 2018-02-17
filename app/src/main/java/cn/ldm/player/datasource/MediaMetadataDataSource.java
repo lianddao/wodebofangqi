@@ -2,6 +2,7 @@ package cn.ldm.player.datasource;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.media.MediaMetadata;
 import android.net.Uri;
 import android.provider.MediaStore;
 
@@ -85,6 +86,33 @@ public class MediaMetadataDataSource {
 
             SongInfo songInfo = new SongInfo(cursor);
             return songInfo;
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+    }
+
+    public static MediaMetadata getById(Context context, String mediaId) {
+        Cursor cursor = null;
+        try {
+            cursor = context.getContentResolver().query(MEDIA_URI, PROJECTION,
+                    MediaStore.Audio.Media._ID + "=" + mediaId, null, null);
+            if (!cursor.moveToFirst()) {
+                return null;
+            }
+
+            MediaMetadata metadata = new MediaMetadata.Builder()
+                    .putString(MediaMetadata.METADATA_KEY_MEDIA_ID, cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID)))
+                    .putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)))
+                    .putString(MediaMetadata.METADATA_KEY_ARTIST, cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)))
+                    .putString(MediaMetadata.METADATA_KEY_ALBUM, cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)))
+                    .putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE,
+                            cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST))
+                                    + " - "
+                                    + cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)))
+                    .putLong(MediaMetadata.METADATA_KEY_DURATION, cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)))
+                    .putString(MediaMetadata.METADATA_KEY_ART_URI, cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA)))
+                    .build();
+            return metadata;
         } finally {
             if (cursor != null) cursor.close();
         }

@@ -23,12 +23,33 @@ import cn.ldm.player.fragments.PlayingFragment;
  * SeekBar，可以与 {@link android.media.session.MediaSession} 一起使用来跟踪和查找播放媒体。
  */
 
-public class MediaSeekBar extends SeekBar implements ValueAnimator.AnimatorUpdateListener {
+public class MediaSeekBar extends SeekBar implements SeekBar.OnSeekBarChangeListener, ValueAnimator.AnimatorUpdateListener {
 
-    public interface TimeChangeListener {
-        void onProgressChanged(MediaSeekBar seekBar);
+    private static final String TAG = MediaSeekBar.class.getSimpleName();
+    private boolean mIsTracking = false;
+    private ValueAnimator mProgressAnimator;
+    private TimeChangeListener _timeChangeListener;
+
+    //region OnSeekBarChangeListener
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
     }
 
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+        mIsTracking = true;
+        ((Activity) getContext()).getMediaController().getTransportControls().pause();
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+        ((Activity) getContext()).getMediaController().getTransportControls().seekTo(getProgress());
+        mIsTracking = false;
+        ((Activity) getContext()).getMediaController().getTransportControls().play();
+    }
+    //endregion
+
+    //region AnimatorUpdateListener
     @Override
     public void onAnimationUpdate(ValueAnimator animation) {
         // 如果用户正在更改滑块，则取消动画。
@@ -41,40 +62,20 @@ public class MediaSeekBar extends SeekBar implements ValueAnimator.AnimatorUpdat
         setProgress(animatedIntValue);
         _timeChangeListener.onProgressChanged(MediaSeekBar.this);
     }
+    //endregion
 
-    private static final String TAG = MediaSeekBar.class.getSimpleName();
-    private boolean mIsTracking = false;
-
-    private OnSeekBarChangeListener mOnSeekBarChangeListener = new OnSeekBarChangeListener() {
-        @Override
-        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        }
-
-        @Override
-        public void onStartTrackingTouch(SeekBar seekBar) {
-            mIsTracking = true;
-            ((Activity) getContext()).getMediaController().getTransportControls().pause();
-        }
-
-        @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {
-            ((Activity) getContext()).getMediaController().getTransportControls().seekTo(getProgress());
-            mIsTracking = false;
-            ((Activity) getContext()).getMediaController().getTransportControls().play();
-        }
-    };
-
-    private ValueAnimator mProgressAnimator;
-    private TimeChangeListener _timeChangeListener;
-
-    public MediaSeekBar(Context context) {
-        super(context);
-        super.setOnSeekBarChangeListener(mOnSeekBarChangeListener);
+    public interface TimeChangeListener {
+        void onProgressChanged(MediaSeekBar seekBar);
     }
+
+    //    public MediaSeekBar(Context context) {
+    //        super(context);
+    //        super.setOnSeekBarChangeListener(this);
+    //    }
 
     public MediaSeekBar(Context context, AttributeSet attrs) {
         super(context, attrs);
-        super.setOnSeekBarChangeListener(mOnSeekBarChangeListener);
+        super.setOnSeekBarChangeListener(this);
 
         ((Activity) getContext()).getMediaController().registerCallback(new MediaController.Callback() {
             @Override
@@ -113,14 +114,12 @@ public class MediaSeekBar extends SeekBar implements ValueAnimator.AnimatorUpdat
             }
 
         });
-
     }
 
-
-    public MediaSeekBar(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        super.setOnSeekBarChangeListener(mOnSeekBarChangeListener);
-    }
+    //    public MediaSeekBar(Context context, AttributeSet attrs, int defStyleAttr) {
+    //        super(context, attrs, defStyleAttr);
+    //        super.setOnSeekBarChangeListener(this);
+    //    }
 
     @Override
     public void setOnSeekBarChangeListener(OnSeekBarChangeListener l) {
@@ -128,9 +127,8 @@ public class MediaSeekBar extends SeekBar implements ValueAnimator.AnimatorUpdat
     }
 
     public void startAnimator(Fragment fragment) {
-        Log.i(TAG, "startAnimator: ");
         _timeChangeListener = (TimeChangeListener) fragment;
-        float speed = ((Activity) getContext()).getMediaController().getPlaybackState().getPlaybackSpeed();
+        final float speed = ((Activity) getContext()).getMediaController().getPlaybackState().getPlaybackSpeed();
         final int timeToEnd = (int) ((getMax() - getProgress()) / speed);//除数为播放速度,计算出到终点还需要走多少个点
 
         mProgressAnimator = ValueAnimator.ofInt(getProgress(), getMax()).setDuration(timeToEnd);
@@ -144,4 +142,9 @@ public class MediaSeekBar extends SeekBar implements ValueAnimator.AnimatorUpdat
         }
     }
 
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        mIsTracking = true;
+    }
 }

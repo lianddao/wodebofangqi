@@ -1,8 +1,8 @@
 package cn.ldm.player.activities;
 
-import android.app.FragmentManager;
+import android.app.ActivityManager;
+import android.app.Fragment;
 import android.content.ComponentName;
-import android.content.Intent;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
 import android.media.session.MediaController;
@@ -10,12 +10,12 @@ import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityManagerCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -23,18 +23,19 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
+import android.widget.Toast;
 
 import java.util.List;
 
 import cn.ldm.player.R;
 import cn.ldm.player.core.MediaItemFactory;
-import cn.ldm.player.fragments.MusicListFragment;
+import cn.ldm.player.fragments.LocalMusicListFragment;
+import cn.ldm.player.fragments.LocalVideoFragment;
 import cn.ldm.player.fragments.WebMusicFragment;
 import cn.ldm.player.services.MyMediaBrowserService;
 
 public class ContainerActivity extends PermissionActivity implements NavigationView.OnNavigationItemSelectedListener,
-        MusicListFragment.InteractionListener,
+        LocalMusicListFragment.InteractionListener,
         WebMusicFragment.OnFragmentInteractionListener {
 
     private static final String TAG = ContainerActivity.class.getSimpleName();
@@ -124,13 +125,55 @@ public class ContainerActivity extends PermissionActivity implements NavigationV
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.i(TAG, "onDestroy: ");
+    }
+
+    @Override
+    public void onAttachFragment(Fragment fragment) {
+        super.onAttachFragment(fragment);
+        Log.i(TAG, "onAttachFragment: ");
+    }
+
+    boolean doubleBackToExitPressedOnce = false;
+
+    @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();
+            if (getFragmentManager().getBackStackEntryCount() > 0 || doubleBackToExitPressedOnce) {
+                super.onBackPressed();
+                return;
+            }else {
+                PlaybackState playbackState = getMediaController().getPlaybackState();
+                if (playbackState == null) {
+                    getMediaBrowser().disconnect();
+                } else if (playbackState.getState() == PlaybackState.STATE_STOPPED) {
+                    getMediaBrowser().disconnect();
+                } else {
+                    Log.i(TAG, "onStop: 无需断开连接,且将应用退至后台");
+                    moveTaskToBack(true);
+                }
+            }
+            this.doubleBackToExitPressedOnce = true;
+            Toast.makeText(this, "再按一次退出程序", Toast.LENGTH_SHORT).show();
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    doubleBackToExitPressedOnce = false;
+                }
+            }, 2000);
         }
+
+
     }
 
     @Override
@@ -180,7 +223,7 @@ public class ContainerActivity extends PermissionActivity implements NavigationV
                 getFragmentManager().popBackStackImmediate();//弹出B
             } else if (!item.isChecked()) {
                 getFragmentManager().beginTransaction()
-                        .replace(R.id.container, MusicListFragment.newInstance(MediaItemFactory.ROOT))
+                        .replace(R.id.container, LocalMusicListFragment.newInstance(MediaItemFactory.ROOT))
                         //                        .addToBackStack(null)
                         .commit();
                 item.setChecked(true);
@@ -189,12 +232,18 @@ public class ContainerActivity extends PermissionActivity implements NavigationV
             if (!item.isChecked()) {
                 getFragmentManager().beginTransaction()
                         .replace(R.id.container, WebMusicFragment.newInstance())
-                        .addToBackStack(null)
+                        //                        .addToBackStack(null)
                         .commit();
             }
-        } else if (id == R.id.nav_slideshow) {
+        } else if (id == R.id.nav_local_video) {
+            if (!item.isChecked()) {
+                getFragmentManager().beginTransaction()
+                        .replace(R.id.container, LocalVideoFragment.newInstance())
+                        //                        .addToBackStack(null)
+                        .commit();
+            }
 
-        } else if (id == R.id.nav_manage) {
+        } else if (id == R.id.nav_web_video) {
 
         } else if (id == R.id.nav_share) {
 
@@ -206,8 +255,6 @@ public class ContainerActivity extends PermissionActivity implements NavigationV
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
-
-    private MenuItem currentMenuItem;
 
     @Override
     public void localMusicFragmentONStart() {

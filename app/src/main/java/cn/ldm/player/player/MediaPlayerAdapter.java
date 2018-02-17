@@ -1,6 +1,5 @@
 package cn.ldm.player.player;
 
-import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaMetadata;
@@ -12,14 +11,16 @@ import android.os.Bundle;
 import android.util.Log;
 
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
+import cn.ldm.player.core.maicong.KuGou;
 import cn.ldm.player.datasource.MediaMetadataDataSource;
 import cn.ldm.player.model.SongInfo;
+import cn.ldm.player.services.MyMediaBrowserService;
 import cn.ldm.player.tool.MusicTool;
 
-import static android.media.session.PlaybackState.STATE_PAUSED;
-import static android.media.session.PlaybackState.STATE_PLAYING;
-import static android.media.session.PlaybackState.STATE_STOPPED;
 import static cn.ldm.player.services.MyMediaBrowserService.LEAF_SEPARATOR;
 
 /**
@@ -33,8 +34,18 @@ public class MediaPlayerAdapter {
     private String _currentMediaId = "";
     private Context _context;
 
+    public void setCurrentMediaMetadata(MediaMetadata metadata) {
+        _mediaSession.setMetadata(metadata);
+    }
+
+
     public static final float PLAYBACK_SPEED = 1.0f;
     private static final PlaybackState.Builder _playbackStateBuilder = new PlaybackState.Builder();
+    public boolean isLocalPlay = false;
+
+    public int getDuration() {
+        return _mediaPlayer.getDuration();
+    }
 
     public MediaPlayerAdapter(Context context, MediaSession mediaSession) {
         _context = context;
@@ -51,9 +62,10 @@ public class MediaPlayerAdapter {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
                     Log.i(TAG, "onCompletion: 播放结束");
-                    _mediaSession.setPlaybackState(
-                            _playbackStateBuilder.setState(PlaybackState.STATE_SKIPPING_TO_NEXT, 0, PLAYBACK_SPEED).build()
-                    );
+                    //                    MediaMetadata next = _mediaSession.getController().getMetadata();
+                    //                    _mediaSession.setPlaybackState(
+                    //                            _playbackStateBuilder.setState(PlaybackState.STATE_SKIPPING_TO_NEXT, -1, PLAYBACK_SPEED).build()
+                    //                    );
                     skipToNext();
                 }
             });
@@ -61,19 +73,11 @@ public class MediaPlayerAdapter {
             _mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
-                    Log.i(TAG, "onPrepared: 元数据准备就绪");
                     mp.start();
-                    _mediaSession.setMetadata(_bufferMedia);
                     _mediaSession.setPlaybackState(
-                            _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, 0, PLAYBACK_SPEED).build()
+                            _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, -1, PLAYBACK_SPEED).build()
                     );
-                }
-            });
-
-            _mediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
-                @Override
-                public void onBufferingUpdate(MediaPlayer mp, int percent) {
-                    Log.i(TAG, "当前缓冲进度: " + percent);
+                    Log.i(TAG, "网络歌曲就绪,它的持续时间 =  " + MusicTool.getDisplayTime(_mediaPlayer.getDuration()));
                 }
             });
         }
@@ -91,6 +95,54 @@ public class MediaPlayerAdapter {
     private boolean isChanged(String mediaId) {
         Log.i(TAG, "isChanged: " + "旧id = " + _currentMediaId + ", 新id = " + mediaId);
         return _currentMediaId.length() > 0 && !_currentMediaId.equals(mediaId);
+    }
+
+    public void local_play(String mediaId) {
+        isLocalPlay = true;
+        if (isInitializing()) {
+            Log.i(TAG, "play: 初始化");
+            initializeMediaPlayer();
+        } else {
+            if (isChanged(mediaId)) {
+                Log.i(TAG, "play: 歌曲不同");
+            } else {
+                //region 歌曲相同
+                Log.i(TAG, "play: 歌曲相同");
+                if (isPlaying()) {
+                    _mediaPlayer.pause();
+                    _mediaSession.setPlaybackState(
+                            _playbackStateBuilder.setState(PlaybackState.STATE_PAUSED, _mediaPlayer.getCurrentPosition(), PLAYBACK_SPEED)
+                                    .build()
+                    );
+                    return;
+                } else {
+                    Log.i(TAG, "play: 判断当前的媒体状态,根据状态时暂停或停止等做处理");
+                    _mediaPlayer.start();
+                    _mediaSession.setPlaybackState(
+                            _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, _mediaPlayer.getCurrentPosition(), PLAYBACK_SPEED)
+                                    .build()
+                    );
+                    return;
+                }
+                //endregion
+            }
+        }
+        _currentMediaId = mediaId;
+        MediaMetadata metadata = MediaMetadataDataSource.getById(_context, mediaId);
+        try {
+            _mediaPlayer.setDataSource(metadata.getString(MediaMetadata.METADATA_KEY_ART_URI));
+            _mediaPlayer.prepare();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex.toString());
+        }
+        _mediaPlayer.start();
+        _mediaSession.setActive(true);
+        _mediaSession.setMetadata(metadata);
+        _mediaSession.setPlaybackState(
+                _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, -1, PLAYBACK_SPEED)
+                        .setActiveQueueItemId((Long.valueOf(_currentMediaId)))
+                        .build()
+        );
     }
 
     public void play(SongInfo songInfo) {
@@ -138,15 +190,67 @@ public class MediaPlayerAdapter {
         //        setNewState(PlaybackState.STATE_PLAYING, -1);
     }
 
-    public void play(MediaSession.QueueItem queueItem) {
+    public void local_play(MediaSession.QueueItem queueItem) {
+        initializeMediaPlayer();
+        local_play(String.valueOf(queueItem.getQueueId()));
+    }
+
+    public void web_play(final MediaSession.QueueItem queueItem) {
+        isLocalPlay = false;
+        Future<MediaMetadata> future = Executors.newCachedThreadPool().submit(new Callable<MediaMetadata>() {
+            @Override
+            public MediaMetadata call() throws Exception {
+                return KuGou.getSongInfo(_context, queueItem);
+            }
+        });
+        try {
+            MediaMetadata metadata = future.get();
+            MyMediaBrowserService.getRunningInstance().setCurrentMediaMetadata(metadata, PlaybackState.STATE_BUFFERING);
+            _mediaSession.setPlaybackState(
+                    _playbackStateBuilder.setState(PlaybackState.STATE_BUFFERING, -1, 1.0f).build());
+            _mediaPlayer.reset();
+            _mediaPlayer.setDataSource(metadata.getString("URL"));
+            _mediaPlayer.prepare();
+//            _mediaPlayer.start();
+//            _mediaSession.setPlaybackState(
+//                    _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, -1, PLAYBACK_SPEED).build()
+//            );
+//            Log.i(TAG, "网络歌曲就绪,它的持续时间 =  " + MusicTool.getDisplayTime(_mediaPlayer.getDuration()));
+        } catch (Exception ex) {
+            throw new RuntimeException(ex.toString());
+        }
+    }
+
+    public void play(final MediaSession.QueueItem queueItem) {
         initializeMediaPlayer();
         try {
-            _mediaPlayer.setDataSource(queueItem.getDescription().getMediaUri().toString());
-            _mediaPlayer.prepare();
+            Log.i(TAG, "play: " + queueItem.getDescription().getMediaUri());
+            if (false) {
+                _mediaPlayer.setDataSource(queueItem.getDescription().getMediaUri().toString());
+                _mediaPlayer.prepare();
+                _mediaSession.setMetadata(MediaMetadataDataSource.queryById(_context, queueItem.getQueueId()).getMediaMetadata());
+                _mediaPlayer.start();
+            } else {
+                new KuGou().getSongById(queueItem, new KuGou.Callback() {
+                    @Override
+                    public void onPostExecute(Object result) {
+                        try {
+                            Log.i(TAG, "onPostExecute: " + result.toString());
+                            String json = result.toString();
+                            MediaMetadata metadata = KuGou.resolve(_context, json).getMediaMetadata();
+                            MyMediaBrowserService.getRunningInstance().setCurrentMediaMetadata(metadata, PlaybackState.STATE_BUFFERING);
+                            _mediaSession.setMetadata(metadata);
+                            _mediaPlayer.setDataSource(metadata.getDescription().getMediaUri().toString());
+                            _mediaPlayer.prepareAsync();
+                        } catch (Exception ex) {
+                        }
+                    }
+                });
+            }
         } catch (Exception ex) {
         }
-        _mediaPlayer.start();
-        _mediaSession.setMetadata(MediaMetadataDataSource.queryById(_context, queueItem.getQueueId()).getMediaMetadata());
+
+
         Log.i(TAG, "play: 播放");
         _mediaSession.setPlaybackState(
                 _playbackStateBuilder.setState(PlaybackState.STATE_PLAYING, _mediaPlayer.getCurrentPosition(), PLAYBACK_SPEED)
@@ -178,10 +282,11 @@ public class MediaPlayerAdapter {
         );
     }
 
+
     public void skipToNext() {
         int nextIndex = -1;
         List<MediaSession.QueueItem> queueItems = _mediaSession.getController().getQueue();
-        long id = _mediaSession.getController().getPlaybackState().getActiveQueueItemId();
+        long id = Long.valueOf(_mediaSession.getController().getMetadata().getDescription().getMediaId());
         for (MediaSession.QueueItem item : queueItems) {
             if (item.getQueueId() == id) {
                 nextIndex = queueItems.indexOf(item) + 1;
@@ -192,7 +297,14 @@ public class MediaPlayerAdapter {
             nextIndex = 0;
         }
         MediaSession.QueueItem queueItem = queueItems.get(nextIndex);
-        play(queueItem);
+
+        if (isLocalPlay) {
+            Log.i(TAG, "skipToNext: 本地下一曲");
+            local_play(queueItem);
+        } else {
+            Log.i(TAG, "skipToNext: 网络下一曲");
+            web_play(queueItem);
+        }
     }
 
     public void skipToPrevious() {
@@ -217,19 +329,15 @@ public class MediaPlayerAdapter {
         try {
             _mediaPlayer.setDataSource(_context, uri);
             _mediaPlayer.prepareAsync();
-            if (extras!=null){
-                _bufferMedia=(MediaMetadata)extras.getParcelable("song");
-            }
         } catch (Exception ex) {
         }
     }
-
-    private MediaMetadata _bufferMedia;
 
     public static String _filterMediaId(String mediaId) {
         String[] split = mediaId.split(String.valueOf(LEAF_SEPARATOR));
         if (split.length == 2) return mediaId.split(String.valueOf(LEAF_SEPARATOR))[1];
         return mediaId.split(String.valueOf(LEAF_SEPARATOR))[2];
     }
+
 
 }

@@ -13,7 +13,7 @@
         android:layout_height="match_parent"
         android:layout_marginBottom="100dp"
         app:layoutManager="LinearLayoutManager"
-        tools:context="cn.ldm.player.fragments.MusicListFragment"
+        tools:context="cn.ldm.player.fragments.LocalMusicListFragment"
         tools:listitem="@layout/fragment_media_browser_item"/>
 
     <include

@@ -18,6 +18,7 @@ import android.widget.TextView;
 import cn.ldm.player.R;
 import cn.ldm.player.core.MusicScanner;
 import cn.ldm.player.model.SongInfo;
+import cn.ldm.player.services.MyMediaBrowserService;
 import cn.ldm.player.tool.MusicTool;
 import cn.ldm.player.ui.MediaSeekBar;
 
@@ -128,17 +129,24 @@ public class PlayingFragment extends Fragment implements MediaSeekBar.TimeChange
     private void updateUi() {
         MediaMetadata metadata = _mediaController.getMetadata();
         _currentSong = SongInfo.make(metadata);
-        imgAlbum.setImageBitmap(MusicScanner.getInstance(getActivity()).retrieveAlbumArt(_currentSong.getMediaMetadata()));
+        if (false) {
+            imgAlbum.setImageBitmap(MusicScanner.getInstance(getActivity()).retrieveAlbumArt(_currentSong.getMediaMetadata()));
+        } else {
+            imgAlbum.setImageBitmap(_currentSong.getMediaMetadata().getBitmap(MediaMetadata.METADATA_KEY_ART));
+        }
+
         txtTitle.setText(_currentSong.getTitle());
         txtSubtitle.setText(_currentSong.getSubtitle());
 
-        seekBar.setMax((int) metadata.getLong(MediaMetadata.METADATA_KEY_DURATION));
+        int duration = MyMediaBrowserService.getRunningInstance().getDuration();
+        Log.i(TAG, "歌曲长度 = " + duration);
+        seekBar.setMax((int) duration);
         seekBar.setProgress((int) _mediaController.getPlaybackState().getPosition());
         seekBar.startAnimator(this);
 
         imgPlayPause.setImageResource(RES_PAUSE);
         txtPlayTime.setText("0");
-        txtTotalTime.setText(seekBar.getMax() + "");
+        txtTotalTime.setText(MusicTool.getDisplayTime(seekBar.getMax()));
     }
 
     @Override

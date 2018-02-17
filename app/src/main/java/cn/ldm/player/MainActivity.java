@@ -8,13 +8,11 @@ import android.graphics.BitmapFactory;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
 import android.media.session.MediaController;
-import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.os.Bundle;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.constraint.ConstraintLayout;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -24,12 +22,11 @@ import cn.ldm.player.activities.PermissionActivity;
 import cn.ldm.player.activities.PlayingActivity;
 import cn.ldm.player.core.MediaItemFactory;
 import cn.ldm.player.core.MusicScanner;
-import cn.ldm.player.fragments.MusicListFragment;
-import cn.ldm.player.fragments.PlayingFragment;
+import cn.ldm.player.fragments.LocalMusicListFragment;
 import cn.ldm.player.model.SongInfo;
 import cn.ldm.player.services.MyMediaBrowserService;
 
-public class MainActivity extends PermissionActivity implements MusicListFragment.InteractionListener {
+public class MainActivity extends PermissionActivity implements LocalMusicListFragment.InteractionListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private String FRAGMENT_TAG = "fragment-tag";
@@ -106,11 +103,11 @@ public class MainActivity extends PermissionActivity implements MusicListFragmen
                     @Override
                     public void onConnected() {
                         //region 装入主片段.时机在服务连接成功之后.
-                        MusicListFragment fragment = (MusicListFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
+                        LocalMusicListFragment fragment = (LocalMusicListFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
                         if (fragment == null) {
                             Log.i(TAG, "initAppAfterRequestPermission: 加入片段");
                             FragmentTransaction transaction = getFragmentManager().beginTransaction();
-                            transaction.replace(FRAGMENT_CONTAINER, MusicListFragment.newInstance(MediaItemFactory.ROOT), FRAGMENT_TAG);
+                            transaction.replace(FRAGMENT_CONTAINER, LocalMusicListFragment.newInstance(MediaItemFactory.ROOT), FRAGMENT_TAG);
                             transaction.commit();
                         }
                         //endregion

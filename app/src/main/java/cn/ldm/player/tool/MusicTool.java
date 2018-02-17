@@ -25,12 +25,12 @@ public class MusicTool {
      * @param mediaMetadata
      * @return
      */
-    public static String getDisplayTime(MediaMetadata mediaMetadata) {
-        long duration = mediaMetadata.getLong(MediaMetadata.METADATA_KEY_DURATION);
-        int seconds = (int) (duration % 60000) / 1000;
-        int minutes = (int) duration / 60000;
-        return String.format("%02d:%02d", minutes, seconds);
-    }
+//    public static String getDisplayTime(MediaMetadata mediaMetadata) {
+//        long duration = mediaMetadata.getLong(MediaMetadata.METADATA_KEY_DURATION);
+//        int seconds = (int) (duration % 60000) / 1000;
+//        int minutes = (int) duration / 60000;
+//        return String.format("%02d:%02d", minutes, seconds);
+//    }
 
     public static String getDisplayTime(int time) {
         int seconds = time % 60000 / 1000;
